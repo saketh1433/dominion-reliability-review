@@ -60,15 +60,20 @@ SELECT
 FROM RELIABILITY.MART.FCT_RELIABILITY f
 JOIN RELIABILITY.MART.DIM_UTILITY d USING (utility_key);
 
--- Customer-weighted index for any group of utilities (the co-op benchmark)
+-- Customer-weighted index for any group of utilities (the co-op benchmark).
+-- Each denominator counts only the customers of utilities that reported that
+-- numerator: a utility that filed SAIDI but not SAIFI (Prince George Electric,
+-- 2025) must not dilute the group's SAIFI. See docs/03, P18.
 CREATE OR REPLACE VIEW RELIABILITY.MART.V_GROUP_INDEX COPY GRANTS AS
 SELECT
   d.peer_group, f.year,
   COUNT(*)                                                         AS utilities,
   SUM(f.customers)                                                 AS customers,
-  SUM(f.cust_interruptions_ex_med) / SUM(f.customers)              AS saifi_ex_med,
-  SUM(f.cust_minutes_ex_med)       / SUM(f.customers)              AS saidi_ex_med,
-  SUM(f.cust_minutes_ex_med) / NULLIF(SUM(f.cust_interruptions_ex_med),0) AS caidi_ex_med
+  SUM(f.cust_interruptions_ex_med)
+    / NULLIF(SUM(CASE WHEN f.cust_interruptions_ex_med IS NOT NULL THEN f.customers END), 0) AS saifi_ex_med,
+  SUM(f.cust_minutes_ex_med)
+    / NULLIF(SUM(CASE WHEN f.cust_minutes_ex_med IS NOT NULL THEN f.customers END), 0)       AS saidi_ex_med,
+  SUM(f.cust_minutes_ex_med) / NULLIF(SUM(f.cust_interruptions_ex_med), 0)                    AS caidi_ex_med
 FROM RELIABILITY.MART.FCT_RELIABILITY f
 JOIN RELIABILITY.MART.DIM_UTILITY d USING (utility_key)
 GROUP BY 1,2;

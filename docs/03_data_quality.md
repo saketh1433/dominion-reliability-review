@@ -25,6 +25,7 @@ Each of these was found by looking before typing (`sql/00_look_first.sql`) or by
 | P15 | EIA-930 | Local time has 23- and 25-hour days at clock changes | All hourly logic keyed on `utc_ts`. T11 confirms no duplicate hour | `06`, T11 |
 | P16 | EIA-930 | `EIA930_SUBREGION_2018_Jan_Jun.csv` is served as an HTML error page (subregion data starts July 2018) | Not loaded. Download script skips it. COPY `PATTERN` would reject it anyway | `scripts/download_eia930.sh` |
 | P17 | EIA-861 vs annual report | EIA customers for Dominion VA are 2,675,735 and the report says 2,809k | Not an error: the report adds North Carolina. Stated on the scorecard card | dashboard |
+| P18 | EIA-861 | Prince George Electric filed SAIDI but no SAIFI for 2025. A group denominator that sums every member's customers would include its 13,341 and understate the co-op SAIFI (1.849 instead of 1.887) | `V_GROUP_INDEX` denominators sum only the customers of utilities that reported that numerator. The dashboard's co-op index (each year over 2015) is unchanged to one decimal, 137.4, because the gap exists in every year | `02`, `V_GROUP_INDEX` |
 
 ## The tests
 

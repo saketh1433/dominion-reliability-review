@@ -59,9 +59,13 @@ WITH u AS (
 SELECT utility_id, state, year, COUNT(*) AS n, LISTAGG(standard, ' + ') AS standards
 FROM u GROUP BY 1, 2, 3 HAVING COUNT(*) > 1 ORDER BY year, utility_id;
 
--- G. After the staging views exist: why ratios are never averaged (expected 2.439 vs 1.849 over 10 co-ops)
-SELECT ROUND(AVG(saifi_ex_med), 3)                              AS avg_of_ratios,
-       ROUND(SUM(saifi_ex_med * customers) / SUM(customers), 3) AS customer_weighted,
-       COUNT(*)                                                 AS coops
+-- G. After the staging views exist: why ratios are never averaged.
+--    Expected 2.439 vs 1.887: ten co-ops filed, nine reported a SAIFI, and the
+--    weighted figure divides by the customers of those nine only.
+SELECT ROUND(AVG(saifi_ex_med), 3)                                                  AS avg_of_ratios,
+       ROUND(SUM(saifi_ex_med * customers)
+             / SUM(CASE WHEN saifi_ex_med IS NOT NULL THEN customers END), 3)       AS customer_weighted,
+       COUNT(*)                                                                     AS coops_filed,
+       COUNT(saifi_ex_med)                                                          AS coops_with_saifi
 FROM RELIABILITY.STG.RELIABILITY
 WHERE state = 'VA' AND entity_type = 'Cooperative' AND year = 2025;

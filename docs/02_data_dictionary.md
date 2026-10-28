@@ -107,7 +107,7 @@ Everything in `STG.RELIABILITY` plus the additive numerators that make any aggre
 Adds prior-year values (`*_py`), `saidi_yoy`, `storm_share`, five-year rolling averages and `frequency_share_of_change` = ln(SAIFI ratio) / ln(SAIDI ratio), the share of a SAIDI change that came from frequency rather than duration. Guarded with `NULLIF` because Snowflake raises on `LN(0)` and some small utilities report zero.
 
 ### `MART.V_GROUP_INDEX` (view, peer_group x year)
-Customer-weighted SAIFI, SAIDI, CAIDI for each peer group: `SUM(cust_interruptions_ex_med) / SUM(customers)`. This is the co-op benchmark.
+Customer-weighted SAIFI, SAIDI, CAIDI for each peer group: `SUM(cust_interruptions_ex_med) / SUM(customers of utilities that reported it)`. This is the co-op benchmark. See `docs/03` P18 for why the denominator is matched to the numerator.
 
 ### `MART.V_VA_COOP_PANEL` (view, created in `03_analysis.sql`)
 The balanced panel: Virginia co-ops with at least 10,000 customers that filed every year 2015 to 2025 (seven utilities). Used in Q3 for the robustness check; the dashboard uses the all-co-op group from `V_GROUP_INDEX`.
