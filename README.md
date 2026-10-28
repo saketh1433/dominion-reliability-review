@@ -59,6 +59,7 @@ Full detail in `docs/`.
 | `docs/05_metrics_and_measures.md` | SAIDI, SAIFI, CAIDI explained and how each dashboard number is computed |
 | `docs/06_powerbi_report.md` | The report page by page |
 | `docs/07_governance_and_runbook.md` | Roles, secrets, refresh procedure, change control |
+| `docs/08_transformations.md` | From the raw cell to the dashboard number: every cleaning rule, with five worked examples on real rows |
 
 ## Reproduce it
 
@@ -70,6 +71,16 @@ Full detail in `docs/`.
 
 Without Snowflake: `python scripts/run_local_duckdb.py` builds the core mart (01 to 04) in DuckDB from `data/input/` and prints the analysis and test results.
 
-## Sources
+## Sources and verification
 
-EIA-861 Annual Electric Power Industry Report (final 2025, released 7 October 2026); PUDL (Catalyst Cooperative) EIA-861 tables 2013 to 2024; NOAA NCEI Storm Events Database 2013 to 2025; EIA-930 Hourly Electric Grid Monitor, PJM subregion DOM, July 2018 to October 2026; Dominion Energy 2025 Annual Report; Virginia SCC grid transformation filings. Details and licences in `docs/01_sources.md`.
+| Source | Used for | Direct link |
+|---|---|---|
+| EIA-861 Annual Electric Power Industry Report, 2025 final (released 7 October 2026) | Reliability indices, customers, service territory | https://www.eia.gov/electricity/data/eia861/ (file: https://www.eia.gov/electricity/data/eia861/zip/f8612025.zip) |
+| PUDL by Catalyst Cooperative, EIA-861 tables 2013 to 2024 (CC-BY 4.0) | Reliability history, meters, sales | https://docs.catalyst.coop/pudl/en/stable/data_access.html (table `core_eia861__yearly_reliability` and two others) |
+| NOAA NCEI Storm Events Database, 2013 to 2025 | Storm county-days | https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/ |
+| NWS zone-county correlation file | Mapping forecast zones to counties | https://www.weather.gov/gis/ZoneCounty |
+| EIA-930 Hourly Electric Grid Monitor, PJM subregion DOM, July 2018 to October 2026 | Hourly demand | https://www.eia.gov/electricity/gridmonitor/ (files: `sixMonthFiles/EIA930_SUBREGION_<year>_<half>.csv`) |
+| Dominion Energy 2025 Annual Report | Figures quoted for comparison | https://s2.q4cdn.com/510812146/files/doc_downloads/2026/03/17/Dominion-Energy-2025-Annual-Report.pdf |
+| Dominion Energy grid resiliency pages, Virginia SCC filings | Programme context | https://www.dominionenergy.com/projects-and-facilities/electric-projects/energy-grid-transformation/grid-resiliency-projects |
+
+Every number on the dashboard can be traced to a row in one of these files. `docs/08_transformations.md` walks the chain with the actual rows (the Dominion line in the EIA sheet, five NOAA event IDs for one Chesterfield storm, line 171,407 of an EIA-930 file). `docs/01_sources.md` has the full register with vintages, row counts, field documentation and licences.

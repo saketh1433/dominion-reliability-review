@@ -31,6 +31,23 @@ Every input, where it came from, what vintage, how to get it again and what it i
 | S8 | not committed (420 MB) | No | `scripts/download_eia930.sh` fetches the 17 files |
 | S9, S10 | not committed | No | Copyrighted documents. Page references are given where a number is quoted |
 
+## Direct links
+
+Every source, with the landing page, the exact file used, the documentation that defines the fields and the licence. The file links are the ones the scripts fetch.
+
+| Source | Landing page | File used | Field definitions | Licence |
+|---|---|---|---|---|
+| S1, S7 EIA-861 2025 final | https://www.eia.gov/electricity/data/eia861/ (release date stated there: 7 October 2026, final data) | https://www.eia.gov/electricity/data/eia861/zip/f8612025.zip (contains `Reliability_2025.xlsx` and `Service_Territory_2025.xlsx`) | Form and instructions: https://www.eia.gov/survey/#eia-861 . Guide to EIA electric power data: https://www.eia.gov/electricity/data/guide/ | U.S. Government work, public domain |
+| S2, S3, S4 PUDL | https://catalyst.coop/pudl/ . Data access page: https://docs.catalyst.coop/pudl/en/stable/data_access.html | Stable parquet, bucket `s3://pudl.catalyst.coop/stable/`, for example https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/stable/core_eia861__yearly_reliability.parquet (also `core_eia861__yearly_advanced_metering_infrastructure.parquet` and `core_eia861__yearly_sales.parquet`). Browse without code at https://data.catalyst.coop | EIA-861 source notes: https://docs.catalyst.coop/pudl/en/latest/data_sources/eia861.html . Data dictionary: https://docs.catalyst.coop/pudl/en/latest/data_dictionaries/pudl_db.html | CC-BY 4.0 (data), listed in the AWS Open Data Registry: https://registry.opendata.aws/catalyst-cooperative-pudl/ |
+| S5 NOAA Storm Events | https://www.ncei.noaa.gov/stormevents/ | Bulk directory https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/ . Files used: `StormEvents_details-ftp_v1.0_d2013_c20260323.csv.gz` through `d2025_c20260819.csv.gz` (13 files; the `_c` stamp changes when NOAA re-issues a year, `scripts/download_noaa.sh` takes whatever is current) | `Storm-Data-Bulk-csv-Format.pdf` and `Storm-Data-Export-Format.pdf` in the same directory | U.S. Government work, public domain |
+| S6 NWS zone-county correlation | https://www.weather.gov/gis/ZoneCounty | The pipe-delimited correlation file published there (`bp16ap26.dbx` at the time of writing). `data/reference/zone_county_correlation.csv` is the same table as CSV | Column list on the same page: STATE, ZONE, CWA, NAME, STATE_ZONE, COUNTY, FIPS, TIME_ZONE, FE_AREA, LAT, LON | Public domain |
+| S8 EIA-930 hourly demand | https://www.eia.gov/electricity/gridmonitor/ | Six-month subregion files, pattern https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_SUBREGION_2025_Jan_Jun.csv (17 files, 2018 Jul_Dec to 2026 Jul_Dec; `scripts/download_eia930.sh`) | About the data: https://www.eia.gov/electricity/930-content/about.html | U.S. Government work, public domain |
+| S9 Dominion Energy 2025 Annual Report | https://investors.dominionenergy.com/ | https://s2.q4cdn.com/510812146/files/doc_downloads/2026/03/17/Dominion-Energy-2025-Annual-Report.pdf . The SEC-filed annual report (Form ARS) is at https://www.sec.gov/Archives/edgar/data/715957/000119312526115192/dei-ars-12312025.pdf and the 10-K at https://www.sec.gov/Archives/edgar/data/715957/000119312526063120/d-20251231.htm | Page references are given wherever a figure is quoted (133 and 130 on page 10, the 38-of-50 peak statement, winter peak, customers 2,809k) | Company publication, quoted for comparison only |
+| S10 Dominion grid resiliency materials | https://www.dominionenergy.com/projects-and-facilities/electric-projects/energy-grid-transformation/grid-resiliency-projects | Same page and its FAQ | Hardening and undergrounding figures quoted in `docs/04_decisions.md` D14 | Company publication |
+| S10 Virginia SCC filings | https://www.scc.virginia.gov/ , case documents through the SCC docket search | Grid transformation plan filings and annual reliability reports by case number | | Public filings |
+
+Verifying a figure from these links: open the file at the link, find the row named in `docs/08_transformations.md` and compare it with the value quoted there. The worked examples give the exact line numbers for the EIA-930 rows and the event IDs for the NOAA rows.
+
 ## How to re-download
 
 ```bash
