@@ -1,12 +1,12 @@
 # Changelog
 
-Every load and every definition change, with the row counts and any test whose result moved.
+Loads and definition changes, with row counts and any test whose result changed.
 
 ## 2026-10-28  v1.1  Transformation walkthrough and source links
 
-- Added `docs/08_transformations.md`: the chain from raw cell to dashboard number, with five worked examples using real rows.
-- Added direct download links, documentation links and licence links for every source to `docs/01_sources.md`.
-- `V_GROUP_INDEX`: denominators now count only the customers of utilities that reported the numerator (P18). Co-op SAIFI 2025 level 1.849 -> 1.887. Co-op index 2025 unchanged at 137.4. No other group affected.
+- Added `docs/08_transformations.md`: processing chain with five worked examples on source rows.
+- Added direct download, documentation and licence links for every source to `docs/01_sources.md`.
+- `V_GROUP_INDEX`: denominators count only the customers of utilities that reported the numerator (P18). Co-op SAIFI 2025: 1.849 -> 1.887. Co-op index 2025 unchanged at 137.4. No other group affected.
 - `00_look_first.sql` query G updated to the matched denominator (expected 2.439 vs 1.887, 10 filed, 9 with SAIFI).
 
 ## 2026-10-27  v1.0  First complete build

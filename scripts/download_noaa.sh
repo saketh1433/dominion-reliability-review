@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Download the NOAA Storm Events "details" files for 2013 to 2025 into data/raw/noaa/.
 # File names carry a creation stamp (_cYYYYMMDD) that changes when NOAA re-issues a
-# year, so the script lists the directory and takes whatever is current.
+# year, so the script reads the directory listing to find the current names.
 set -euo pipefail
 BASE="https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles"
 OUT="$(dirname "$0")/../data/raw/noaa"

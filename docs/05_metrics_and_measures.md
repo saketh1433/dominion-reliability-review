@@ -1,44 +1,44 @@
 # 05. Metrics and measures
 
-What each number means in plain words, how it is defined and the exact calculation behind every figure on the dashboard. The DAX for all measures is in `powerbi/measures.dax`.
+Definitions of the reliability indices and the calculation behind each figure on the report. DAX for all measures is in `powerbi/measures.dax`.
 
-## The three reliability indices
+## Reliability indices
 
-Every reliability number is built from two counts a utility keeps for the year: how many customer-interruptions happened and how many customer-minutes of interruption. Divide each by the number of customers and you get the two base indices. The third is their ratio.
+Each index is derived from two annual totals reported by the utility, customer-interruptions and customer-minutes of interruption, divided by customers served.
 
-| Index | Plain name on the dashboard | Formula | Unit | What it answers |
+| Index | Name used on the report | Formula | Unit | Measures |
 |---|---|---|---|---|
-| SAIFI | Outages per customer | customer-interruptions / customers | interruptions per customer per year | How often the lights go out |
-| SAIDI | Outage minutes per customer | customer-minutes / customers | minutes per customer per year | How much outage time a typical customer had |
-| CAIDI | Minutes to restore each outage | SAIDI / SAIFI | minutes per interruption | How long each outage lasted |
+| SAIFI | Outages per customer | customer-interruptions / customers | interruptions per customer per year | Frequency of interruption |
+| SAIDI | Outage minutes per customer | customer-minutes / customers | minutes per customer per year | Total interruption time per customer |
+| CAIDI | Minutes to restore each outage | SAIDI / SAIFI | minutes per interruption | Average duration of an interruption |
 
-The identity SAIDI = SAIFI x CAIDI always holds (test T2 checks it). It means any change in SAIDI splits into a frequency part and a duration part:
+SAIDI = SAIFI x CAIDI by definition (test T2 checks the identity in the data). A change in SAIDI therefore decomposes into a frequency component and a duration component:
 
 ln(SAIDI2 / SAIDI1) = ln(SAIFI2 / SAIFI1) + ln(CAIDI2 / CAIDI1)
 
-so the share of a SAIDI change that came from frequency is ln(SAIFI ratio) / ln(SAIDI ratio). That is `V_TREND.frequency_share_of_change` and the "Frequency share" measures.
+The share of a SAIDI change attributable to frequency is ln(SAIFI ratio) / ln(SAIDI ratio). This is `V_TREND.frequency_share_of_change` and the `Frequency share` measures.
 
 ## Major event days
 
-Every index comes in two versions:
+Each index is reported in two forms:
 
-- **All events**: everything that happened.
-- **Excluding major event days (ex-MED)**: with the worst storm days removed. This is the version utilities are judged on, because a hurricane says nothing about day-to-day performance.
+- All events.
+- Excluding major event days (ex-MED): days classified as major events are removed. Regulatory reporting and the annual report use this form.
 
-How "worst" is defined is the catch. IEEE Standard 1366 defines a major event day statistically (a day whose SAIDI exceeds a threshold set from the past five years, the "2.5 beta" method). Dominion, Alabama Power and some others use their own rule and file under the "Other" standard. The dashboard shows the method beside every peer number for that reason.
+IEEE Standard 1366 defines a major event day statistically (a day whose SAIDI exceeds a threshold derived from the previous five years, the 2.5 beta method). Dominion, Alabama Power and some other utilities apply their own definition and file under EIA's "Other" standard. The report shows the method beside each peer figure.
 
 Storm share = (SAIDI all - SAIDI ex-MED) / SAIDI all. For Dominion in 2025: (306.7 - 144.4) / 306.7 = 53%.
 
-## The rule for aggregating
+## Aggregation rule
 
-Never average a ratio. Sum numerators, sum denominators, divide once.
+Ratios are not averaged. Numerators and denominators are summed separately and divided once.
 
-| Wrong | Right |
+| Not used | Used |
 |---|---|
 | `AVERAGE(saidi_ex_med)` across utilities | `SUM(cust_minutes_ex_med) / SUM(customers)` |
-| `AVERAGE(saidi_ex_med)` across years for one utility (happens to work, but only because customers barely change) | `AVERAGEX(VALUES(year), [SAIDI ex MED])`: compute each year properly, then average the years |
+| `AVERAGE(saidi_ex_med)` across years for one utility | `AVERAGEX(VALUES(year), [SAIDI ex MED])`: the customer-weighted value for each year, then the mean of the years |
 
-## Every number on the dashboard
+## Report figures
 
 ### Scorecard
 
@@ -46,7 +46,7 @@ Never average a ratio. Sum numerators, sum denominators, divide once.
 |---|---|---|---|
 | Outage minutes per customer, 3-year average 2023 to 2025 | 133.0 | `SAIDI 3yr ending 2025` | Customer-weighted SAIDI ex-MED for each of 2023, 2024, 2025, then the mean. Annual report page 10: 133 |
 | 3-year average 2022 to 2024 | 130.2 | `SAIDI 3yr ending 2024` | Same for 2022 to 2024. Report: 130 |
-| Customers served, 2025 | 2,675,735 | `Total Customers` filtered to 2025 | EIA `oth_customers`. Virginia only; the report's 2,809k adds North Carolina |
+| Customers served, 2025 | 2,675,735 | `Total Customers` filtered to 2025 | EIA `oth_customers`. Virginia only. The annual report's 2,809k includes North Carolina |
 | Outages per customer, 2025 | 1.32 | `SAIFI ex MED` | 2025 row |
 | Minutes to restore each outage, 2025 | 109.4 | `CAIDI ex MED` | SAIDI / SAIFI |
 | Including major storms, 2025 | 306.7 | `SAIDI all events` | 2025 row |
@@ -60,15 +60,15 @@ Never average a ratio. Sum numerators, sum denominators, divide once.
 | CAIDI 2019 -> 2025 | 120.5 -> 109.4, -9% | `CAIDI change 2019 to 2025` |
 | SAIDI 2019 -> 2023 | -17.7%, 34% of it from frequency, 66% from duration | `SAIDI change 2019 to 2023`, `Frequency share 2019 to 2023` |
 | SAIDI 2023 -> 2025 | +17.1%, 79% from frequency | same pair for 2023 to 2025 |
-| Dashed lines at 2015 and 2020 | | 2015: outages recorded automatically from this year. 2020: lines up to 46 kV included from this year. Both change what is counted, neither is performance |
+| Dashed lines at 2015 and 2020 | | 2015: outages recorded automatically from this year. 2020: lines up to 46 kV included from this year. Both are changes in what is counted |
 
 ### Weather
 
 | Figure | Value | Calculation |
 |---|---|---|
-| Storm county-days, 2025 | 796 | `STORM_INDEX`. Second-highest in the record after 2019 (851) |
+| Storm county-days, 2025 | 796 | `STORM_INDEX`. Second-highest in the record; 2019 was 851 |
 | Correlation, storm days vs SAIDI ex-MED, 2015 to 2024 | 0.70 | `CORR()` in `05_noaa_storms.sql` Q6b. With SAIFI: 0.41. With major-storm minutes: 0.47 |
-| Weather alone predicts 2025 | 145.3 | `REGR_INTERCEPT + REGR_SLOPE x 796`, fitted 2015 to 2024 |
+| Predicted from weather, 2025 | 145.3 | `REGR_INTERCEPT + REGR_SLOPE x 796`, fitted 2015 to 2024 |
 | Actual 2025 | 144.4 | EIA |
 | Weather-adjusted SAIDI | 2015: 122, 2019: 136, 2025: 133 | actual - predicted + mean(2015 to 2024) |
 | Ten-year average line | 134 | mean of actual SAIDI ex-MED, 2015 to 2024 |
@@ -101,6 +101,6 @@ Never average a ratio. Sum numerators, sum denominators, divide once.
 
 ## Measure naming
 
-Measures keep the metric name (`SAIDI ex MED`, `CAIDI 5yr`). Business language goes in the visual title. Columns keep their Snowflake names. That way the Data pane reads like the SQL and the dashboard reads like the business and a reviewer can trace any card back to a column in `docs/02_data_dictionary.md`.
+Measures use the metric name (`SAIDI ex MED`, `CAIDI 5yr`). Plain-language names are used in visual titles. Columns keep their Snowflake names, so each card can be traced to a column in `docs/02_data_dictionary.md`.
 
-Helper measures that exist only for formatting (`Bar colour`, `Dot colour`, `Row colour`, `SAIFI label`, `CAIDI label`, `Index label`, `Adjusted label`, `Hour colour`, `Change colour`) return colour strings or labelled values and are listed at the end of `powerbi/measures.dax`.
+Formatting measures (`Bar colour`, `Dot colour`, `Row colour`, `SAIFI label`, `CAIDI label`, `Index label`, `Adjusted label`, `Hour colour`, `Change colour`) return colour strings or conditional labels and are listed at the end of `powerbi/measures.dax`.

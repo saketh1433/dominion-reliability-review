@@ -1,14 +1,14 @@
 # 02. Data dictionary
 
-Database `RELIABILITY`, three schemas. The contract between them:
+Database `RELIABILITY`, three schemas.
 
 | Schema | Rule | Who writes | Who reads |
 |---|---|---|---|
-| `RAW` | Every column `VARCHAR`. One table per source file, loaded by `COPY INTO`. Never edited after load. | the load scripts | `STG` only |
-| `STG` | Views. Typing (`TRY_TO_NUMBER`, `TRY_TO_DATE`), thousands separators stripped, unpivot, de-duplication. No business logic. | `01`, `05`, `06` | `MART` only |
+| `RAW` | Every column `VARCHAR`. One table per source file, loaded by `COPY INTO`. Not modified after load. | load scripts | `STG` |
+| `STG` | Views. Typing (`TRY_TO_NUMBER`, `TRY_TO_DATE`), separator removal, unpivot, de-duplication. No business logic. | `01`, `05`, `06` | `MART` |
 | `MART` | Tables and views with the business logic: keys, peer groups, additive numerators, indexes, fits. | `02`, `05`, `06`, `07` | Power BI (`BI_READER`), analysts |
 
-Grain is stated for every object. A utility is identified throughout by `utility_key = utility_id || '|' || state`, because EIA reports one row per utility per state and a utility that operates in two states is two reporting units.
+Grain is stated for each object. A utility is identified by `utility_key = utility_id || '|' || state`. EIA reports one row per utility per state, so a utility operating in two states is two reporting units.
 
 ## RAW
 
@@ -92,47 +92,47 @@ Common typed columns in `STG.RELIABILITY`:
 | Southeast IOU peer | Duke Carolinas 5416-NC, Duke Progress 3046-NC, Georgia Power 7140-GA, Alabama Power 195-AL, Dominion SC 17539-SC |
 | Mid-Atlantic IOU peer | BGE 1167-MD, Pepco 15270-MD, PECO 14940-PA, PPL 14715-PA |
 | Florida IOU peer | FPL 6452-FL, Duke Energy Florida 6455-FL |
-| Other | everyone else (about 950 reporting units) |
+| Other | all remaining reporting units (about 950) |
 
 ### `MART.FCT_RELIABILITY` (13,095 rows, utility_key x year, 2013 to 2025)
-Everything in `STG.RELIABILITY` plus the additive numerators that make any aggregate correct:
+All columns of `STG.RELIABILITY` plus the additive numerators used for aggregation:
 
-| Column | Formula | Why |
+| Column | Formula | Purpose |
 |---|---|---|
 | `storm_saidi`, `storm_saifi` | all - ex_med | Minutes and interruptions attributable to major event days |
-| `cust_minutes_all`, `cust_minutes_ex_med` | SAIDI x customers | Total customer-minutes. Sum these across utilities or years, then divide by summed customers. Never average SAIDI. |
-| `cust_interruptions_all`, `cust_interruptions_ex_med` | SAIFI x customers | Total customer-interruptions, same rule |
+| `cust_minutes_all`, `cust_minutes_ex_med` | SAIDI x customers | Total customer-minutes. Summed across utilities or years and divided by summed customers. |
+| `cust_interruptions_all`, `cust_interruptions_ex_med` | SAIFI x customers | Total customer-interruptions, aggregated the same way |
 
 ### `MART.V_TREND` (view, utility_key x year)
-Adds prior-year values (`*_py`), `saidi_yoy`, `storm_share`, five-year rolling averages and `frequency_share_of_change` = ln(SAIFI ratio) / ln(SAIDI ratio), the share of a SAIDI change that came from frequency rather than duration. Guarded with `NULLIF` because Snowflake raises on `LN(0)` and some small utilities report zero.
+Adds prior-year values (`*_py`), `saidi_yoy`, `storm_share`, five-year rolling averages and `frequency_share_of_change` = ln(SAIFI ratio) / ln(SAIDI ratio), the share of a SAIDI change attributable to frequency. Arguments to `LN` are guarded with `NULLIF` because Snowflake raises an error on `LN(0)` and some utilities report zero.
 
 ### `MART.V_GROUP_INDEX` (view, peer_group x year)
-Customer-weighted SAIFI, SAIDI, CAIDI for each peer group: `SUM(cust_interruptions_ex_med) / SUM(customers of utilities that reported it)`. This is the co-op benchmark. See `docs/03` P18 for why the denominator is matched to the numerator.
+Customer-weighted SAIFI, SAIDI, CAIDI for each peer group: `SUM(cust_interruptions_ex_med) / SUM(customers of utilities that reported it)`. Used for the co-op benchmark. See `docs/03` P18 on the denominator.
 
 ### `MART.V_VA_COOP_PANEL` (view, created in `03_analysis.sql`)
-The balanced panel: Virginia co-ops with at least 10,000 customers that filed every year 2015 to 2025 (seven utilities). Used in Q3 for the robustness check; the dashboard uses the all-co-op group from `V_GROUP_INDEX`.
+Balanced panel of Virginia co-ops with at least 10,000 customers that filed in every year 2015 to 2025 (seven utilities). Used in Q3 as a robustness check. The report uses the all-co-op group from `V_GROUP_INDEX`.
 
 ### `MART.STORM_INDEX` (13 rows, year)
 | Column | Meaning |
 |---|---|
-| `storm_county_days` | Count of (county, date) pairs in Dominion's Virginia counties with at least one wind, winter or tropical event. One squall line producing 40 wind reports in one county on one day counts once. |
+| `storm_county_days` | Count of (county, date) pairs in Dominion's Virginia counties with at least one wind, winter or tropical event. Multiple reports in one county on one day count once. |
 | `wind_days`, `winter_days`, `tropical_days` | Same, by event family |
 | `severe_gust_days` | County-days with a Thunderstorm Wind gust of 60 knots or more |
 
 ### `MART.V_STORM_VS_SAIDI` (view, year)
-`STORM_INDEX` joined to Dominion's row of `FCT_RELIABILITY`: adds `saidi_ex_med`, `saifi_ex_med`, `storm_saidi`. Feeds the scatter and the fit.
+`STORM_INDEX` joined to Dominion's rows in `FCT_RELIABILITY`: adds `saidi_ex_med`, `saifi_ex_med`, `storm_saidi`. Source for the scatter chart and the weather fit.
 
 ### `MART.SAIDI_WEATHER_ADJUSTED` (11 rows, year 2015 to 2025)
 | Column | Meaning |
 |---|---|
 | `predicted_from_weather` | intercept + slope x storm_county_days, fitted on 2015 to 2024 (intercept 104.4, slope 0.0514 minutes per county-day) |
-| `weather_adjusted_saidi` | actual - predicted + mean(2015 to 2024). What the year would have looked like with average weather |
+| `weather_adjusted_saidi` | actual - predicted + mean(2015 to 2024). The year's SAIDI at average weather exposure |
 
 ### `MART.DOM_LOAD_ANNUAL` (9 rows, year 2018 to 2026)
 `winter_peak_mw` (Dec, Jan, Feb of the calendar year), `summer_peak_mw` (Jun to Aug), `peak_mw`, `floor_mw` (lowest hour), `median_mw`, `avg_mw`, `energy_twh`, `hours_reported`, `hours_missing`. 2018 is July onward and 2026 is year to date.
 
 ### `MART.DOM_TOP50_HOURS` (96 rows)
-The fifty highest-demand hours ranked two ways: `rank_end_2025` as the record stood on 31 December 2025 (the window Dominion's report describes) and `rank_today`. A row appears if it is in either top fifty.
+The fifty highest-demand hours ranked at two reference dates: `rank_end_2025` (record to 31 December 2025, comparable with the annual report) and `rank_today`. A row is included if it is in either top fifty.
 
 ### `MART.DOM_LOAD_PROFILE` (24 rows, hour of day)
 `avg_mw_2019`, `avg_mw_2025`, `growth_pct` for each hour ending 1 to 24.
@@ -141,5 +141,5 @@ The fifty highest-demand hours ranked two ways: `rank_end_2025` as the record st
 
 - Tables and views upper case, columns lower case snake case, as Snowflake displays them.
 - `V_` prefix for views in MART, none in STG (everything in STG is a view).
-- `_ex_med` = excluding major event days, `_all` = all events. Never "adjusted" for these, that word is reserved for the weather fit.
-- A column that is a count of customers is always `customers`. A column that is minutes per customer is always `saidi_*`.
+- `_ex_med` = excluding major event days, `_all` = all events. `adjusted` refers only to the weather fit.
+- `customers` is a count of customers. `saidi_*` is minutes per customer.

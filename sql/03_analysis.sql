@@ -1,8 +1,8 @@
 -- =====================================================================
--- DOMINION RELIABILITY MART  |  03: the analysis queries, one per question
+-- DOMINION RELIABILITY MART  |  03: analysis queries
 -- =====================================================================
 
--- Q1. Is Dominion getting more or less reliable, and is it frequency or duration?
+-- Q1. Dominion's trend, decomposed into frequency and duration
 -- Q1a: the trend with year-on-year decomposition
 SELECT year, standard, saidi_ex_med, saifi_ex_med, caidi_ex_med,
        ROUND(saidi_yoy * 100, 1)                  AS saidi_yoy_pct,
@@ -23,7 +23,7 @@ SELECT a.year AS from_year, b.year AS to_year,
 FROM p a JOIN p b ON (a.year, b.year) IN ((2019, 2023), (2023, 2025), (2015, 2025))
 ORDER BY 1;
 
--- Q2. How much is weather? Storm vs day-to-day minutes
+-- Q2. Storm share: major-event minutes vs ex-MED minutes
 SELECT year, saidi_all, saidi_ex_med, storm_saidi,
        ROUND(storm_share * 100, 0)                                  AS storm_share_pct,
        ROUND(storm_saidi / NULLIF(saifi_all - saifi_ex_med, 0), 0)  AS storm_caidi_minutes
@@ -31,12 +31,12 @@ FROM RELIABILITY.MART.V_TREND
 WHERE utility_key = '19876|VA'
 ORDER BY year;
 
--- Q2b: do storm minutes and day-to-day minutes move together?
+-- Q2b: correlation of storm minutes with ex-MED minutes
 SELECT ROUND(CORR(storm_saidi, saidi_ex_med), 2) AS corr_storm_vs_daytoday
 FROM RELIABILITY.MART.FCT_RELIABILITY
 WHERE utility_key = '19876|VA';
 
--- Q3. Fair comparison: Dominion vs Virginia co-ops in the same weather
+-- Q3. Dominion vs Virginia co-ops
 -- Q3a: balanced panel of co-ops (>=10k customers, filed every year 2015-2025)
 CREATE OR REPLACE VIEW RELIABILITY.MART.V_VA_COOP_PANEL AS
 SELECT f.utility_key
@@ -68,8 +68,8 @@ FROM dom d JOIN coop c USING (year)
 WHERE d.year >= 2015
 ORDER BY year;
 
--- Q3c: the two headline numbers. Correlation of yearly % changes, and the
--- change in Dominion's position relative to the co-ops (3-year averages)
+-- Q3c: correlation of yearly changes, and the change in Dominion's position
+-- relative to the co-ops (3-year averages)
 WITH coop AS (
   SELECT year, SUM(cust_interruptions_ex_med) / SUM(customers) AS coop_saifi
   FROM RELIABILITY.MART.FCT_RELIABILITY
@@ -89,7 +89,7 @@ SELECT
   ROUND((relative_2023_25 / relative_2015_17 - 1) * 100, 1)                                   AS dominion_relative_improvement_pct
 FROM j;
 
--- Q3d: leave-one-out robustness. Does any single co-op drive the result?
+-- Q3d: leave-one-out robustness check
 WITH panel AS (SELECT utility_key FROM RELIABILITY.MART.V_VA_COOP_PANEL),
 dom AS (SELECT year, saifi_ex_med AS dom_saifi FROM RELIABILITY.MART.FCT_RELIABILITY WHERE utility_key = '19876|VA'),
 loo AS (
@@ -107,7 +107,7 @@ SELECT d2.utility_name AS dropped_coop,
 FROM loo l JOIN dom USING (year) JOIN RELIABILITY.MART.DIM_UTILITY d2 ON d2.utility_key = l.dropped
 GROUP BY 1 ORDER BY 4;
 
--- Q4. Could smart meters be inflating measured frequency?
+-- Q4. Effect of smart meter rollout on measured frequency
 -- Event study across all IOUs: SAIFI (net of the national year median) before
 -- and after the year AMI share first passed 50%, for utilities below 20% two years earlier.
 WITH base AS (
@@ -141,7 +141,7 @@ SELECT years_from_rollout, COUNT(*) AS utilities,
        ROUND(MEDIAN(change_vs_two_years_before) * 100, 1) AS median_change_pct
 FROM rel GROUP BY 1 ORDER BY 1;
 
--- Q5. Load growth that SAIDI cannot see: Dominion VA sales by class
+-- Q5. Dominion VA sales and customers by class
 SELECT year,
        SUM(CASE WHEN customer_class = 'commercial'  THEN sales_mwh END) / 1e6 AS commercial_twh,
        SUM(CASE WHEN customer_class = 'residential' THEN sales_mwh END) / 1e6 AS residential_twh,

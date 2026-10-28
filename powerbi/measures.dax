@@ -1,8 +1,8 @@
 // =====================================================================
-// Dominion reliability report: every DAX measure, grouped by table.
-// Rule: columns keep Snowflake names, measures keep metric names,
-// business language lives in visual titles.
-// Aggregation rule: sum numerators, sum denominators, divide once.
+// Dominion reliability report: DAX measures and calculated columns, by table.
+// Columns keep Snowflake names; measures use metric names; plain-language
+// names are used in visual titles.
+// Aggregation: sum numerators, sum denominators, divide once.
 // =====================================================================
 
 // ---------------------------------------------------------------------
@@ -23,8 +23,8 @@ Storm SAIDI = [SAIDI all events] - [SAIDI ex MED]
 
 Storm share = DIVIDE([Storm SAIDI], [SAIDI all events])
 
-// Three-year averages: compute each year's customer-weighted SAIDI, then average the years.
-// This is how Dominion defines its three-year figure. Ties to the annual report: 133.0 and 130.2.
+// Three-year averages: the customer-weighted SAIDI for each year, then the mean of
+// the years. Matches Dominion's definition. Annual report: 133.0 and 130.2.
 SAIDI 3yr ending 2025 =
 CALCULATE(
     AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]),
@@ -103,18 +103,18 @@ Method =
 VAR s = IF(DISTINCTCOUNT(FCT_RELIABILITY[STANDARD]) > 1, "Changed", MAX(FCT_RELIABILITY[STANDARD]))
 RETURN IF(s = "Other", "Own rule", s)
 
-// Point labels: show the value only in the years the story names
+// Point labels: value shown only for selected years
 SAIFI label = IF(SELECTEDVALUE(FCT_RELIABILITY[YEAR]) IN {2019, 2023, 2025}, [SAIFI ex MED])
 CAIDI label = IF(SELECTEDVALUE(FCT_RELIABILITY[YEAR]) IN {2019, 2023, 2025}, [CAIDI ex MED])
 
-// Colour: positive change is worse for outage minutes
+// Colour: an increase in outage minutes is shown in red
 Change colour = IF([SAIDI change %] > 0, "#B23B3B", IF([SAIDI change %] < 0, "#2E7D32", "#333333"))
 
 // ---------------------------------------------------------------------
 // DIM_UTILITY: calculated columns and colour helpers
 // ---------------------------------------------------------------------
 
-// Calculated column. Peer groups and display names are assigned by EIA ID, never by name.
+// Calculated column. Display names are assigned by EIA ID.
 Display name =
 SWITCH(DIM_UTILITY[UTILITY_KEY],
     "19876|VA", "Dominion Energy Virginia",
@@ -146,7 +146,7 @@ SWITCH(DIM_UTILITY[Display name],
     "Pepco (MD)",               "Pepco",
     DIM_UTILITY[Display name])
 
-// Calculated column: label only the quadrant Dominion sits in
+// Calculated column: labels for the quadrant containing Dominion
 Quadrant name =
 SWITCH(DIM_UTILITY[Display name],
     "Dominion Energy Virginia", "Dominion VA",
@@ -164,7 +164,7 @@ SWITCH(DIM_UTILITY[PEER_GROUP],
     "Dominion Energy Virginia", "Virginia",
     DIM_UTILITY[PEER_GROUP])
 
-// Measures: blue is the thing being judged, grey is context, on every page
+// Colour measures: #0A66C2 for Dominion, #B8BCC2 for other utilities
 Bar colour = IF(SELECTEDVALUE(DIM_UTILITY[Display name]) = "Dominion Energy Virginia", "#0A66C2", "#B8BCC2")
 Row colour = IF(SELECTEDVALUE(DIM_UTILITY[Display name]) = "Dominion Energy Virginia", "#E8F0FB", "#FFFFFF")
 

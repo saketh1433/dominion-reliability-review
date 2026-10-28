@@ -1,11 +1,11 @@
 -- =====================================================================
--- DOMINION RELIABILITY MART  |  00: profile the raw tables before typing anything
--- Run each query on the RAW tables after COPY INTO. Expected results are
--- noted beside each query; anything else means the load or the file changed.
+-- DOMINION RELIABILITY MART  |  00: profiling queries on the RAW tables
+-- Run after COPY INTO. Expected results are noted beside each query. A
+-- different result indicates a change in the load or the source file.
 -- =====================================================================
 
--- A. Find Dominion. It is not filed under "Dominion" in Virginia: the legal
---    name on the EIA form is Virginia Electric & Power Co, utility 19876.
+-- A. Locate Dominion. The EIA filing uses the legal name Virginia Electric &
+--    Power Co, utility number 19876.
 SELECT utility_number, utility_name, state, ownership, oth_saidi_all, oth_saidi_ex_med, oth_customers
 FROM RELIABILITY.RAW.EIA861_RELIABILITY_2025
 WHERE utility_name ILIKE '%dominion%';
@@ -34,7 +34,7 @@ SELECT COUNT(*) AS would_fail
 FROM RELIABILITY.RAW.EIA861_RELIABILITY_2025
 WHERE ieee_customers IS NOT NULL AND TRY_TO_NUMBER(ieee_customers) IS NULL;
 
--- D. PUDL writes both standards for every utility, even when blank
+-- D. PUDL includes a row for both standards for every utility, including empty rows
 SELECT standard, COUNT(*) AS rows_,
        SUM(CASE WHEN saidi_w_med IS NULL AND saidi_wo_med IS NULL THEN 1 ELSE 0 END) AS empty_rows
 FROM RELIABILITY.RAW.PUDL_RELIABILITY GROUP BY 1;
@@ -43,7 +43,7 @@ SELECT YEAR(TRY_TO_DATE(report_date)) AS yr, COUNT(*) AS rows_,
        COUNT(DISTINCT utility_id_eia || '|' || state) AS utilities
 FROM RELIABILITY.RAW.PUDL_RELIABILITY GROUP BY 1 ORDER BY 1;
 
--- E. Dominion across the years, still raw. Watch auto-recording flip in 2015 and 34.5 kV become 46 kV in 2020.
+-- E. Dominion by year, raw. Automated recording starts in 2015. Highest voltage changes from 34.5 kV to 46 kV in 2020.
 SELECT report_date, standard, saidi_w_med, saidi_wo_med, saifi_wo_med, caidi_wo_med, customers,
        outages_recorded_automatically, highest_distribution_voltage_kv
 FROM RELIABILITY.RAW.PUDL_RELIABILITY
@@ -59,9 +59,9 @@ WITH u AS (
 SELECT utility_id, state, year, COUNT(*) AS n, LISTAGG(standard, ' + ') AS standards
 FROM u GROUP BY 1, 2, 3 HAVING COUNT(*) > 1 ORDER BY year, utility_id;
 
--- G. After the staging views exist: why ratios are never averaged.
---    Expected 2.439 vs 1.887: ten co-ops filed, nine reported a SAIFI, and the
---    weighted figure divides by the customers of those nine only.
+-- G. After the staging views exist: mean of ratios vs customer-weighted ratio.
+--    Expected 2.439 vs 1.887: ten co-ops filed and nine reported a SAIFI. The
+--    weighted figure divides by the customers of those nine.
 SELECT ROUND(AVG(saifi_ex_med), 3)                                                  AS avg_of_ratios,
        ROUND(SUM(saifi_ex_med * customers)
              / SUM(CASE WHEN saifi_ex_med IS NOT NULL THEN customers END), 3)       AS customer_weighted,

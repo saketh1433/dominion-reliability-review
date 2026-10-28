@@ -3,11 +3,9 @@
 -- Adds one raw table, one staging view, two mart tables, three tests and
 -- four analysis queries. Run after 01 to 05.
 --
--- What this is: every hour since July 2018, how much electricity the PJM
--- "DOM" zone used. DOM is Dominion's transmission zone (Virginia and
--- north-east North Carolina, plus the co-ops that take power through it).
--- It is not outage data. It answers one question the reliability data
--- cannot: how fast is the load growing, and in what shape.
+-- Hourly demand for the PJM "DOM" subregion since July 2018. DOM is
+-- Dominion's transmission zone (Virginia and north-east North Carolina,
+-- including co-ops served through it). Used for load growth, not outages.
 -- =====================================================================
 
 USE WAREHOUSE SNOWFLAKE_LEARNING_WH;
@@ -24,7 +22,7 @@ CREATE STAGE IF NOT EXISTS RELIABILITY.RAW.EIA930_STAGE FILE_FORMAT = RELIABILIT
 -- Upload the 17 EIA930_SUBREGION_20YY_Jan_Jun.csv / Jul_Dec.csv files
 -- (2018_Jul_Dec through 2026_Jul_Dec) into EIA930_STAGE through Snowsight.
 -- 2018_Jan_Jun does not exist: subregion reporting starts 1 July 2018.
--- A 44 KB file by that name is the HTML error page EIA serves instead. Do not load it.
+-- A 44 KB file by that name is an HTML error page. Do not load it.
 -- After the upload, confirm the files are there (expected 17 rows):
 LIST @RELIABILITY.RAW.EIA930_STAGE;
 
@@ -45,14 +43,13 @@ SELECT 'PJM DOM', COUNT(*) FROM RELIABILITY.RAW.EIA930_SUBREGION
 WHERE balancing_authority = 'PJM' AND sub_region = 'DOM';
 
 -- ---------- 2. Staging ----------
--- Only the DOM zone, typed. Two things happen here:
---   1. the hour is kept in UTC so the clock-change days (23 and 25 hours) do
---      not create duplicates;
---   2. demand above 60,000 MW is set to NULL. The whole of PJM peaks near
---      150,000 MW and DOM alone near 25,000, so a DOM hour above 60,000 is a
---      reporting error. There are two such rows, on 18 October 2021, at
---      1.5 billion and 1.0 billion MW. The reported value is kept in its own
---      column so the test below can show them.
+-- DOM zone only, typed.
+--   1. The hour is keyed on UTC so that clock-change days (23 and 25 hours)
+--      do not create duplicates.
+--   2. Demand above 60,000 MW is set to NULL. PJM as a whole peaks near
+--      150,000 MW and DOM near 25,000, so a DOM hour above 60,000 is a
+--      reporting error. Two such rows exist (18 October 2021, 1.5 billion and
+--      1.0 billion MW). The reported value is retained in demand_mw_reported.
 CREATE OR REPLACE VIEW RELIABILITY.STG.EIA930_DOM_HOURLY AS
 SELECT
   TRY_TO_DATE(data_date, 'MM/DD/YYYY')                              AS data_date,
@@ -69,7 +66,7 @@ WHERE balancing_authority = 'PJM' AND sub_region = 'DOM';
 SELECT COUNT(*) FROM RELIABILITY.STG.EIA930_DOM_HOURLY;
 
 -- ---------- 3. Mart ----------
--- One row per year: the peak in each season, the floor, the middle and the energy.
+-- One row per year: seasonal peaks, floor, median, mean and energy.
 -- Winter = Dec, Jan, Feb of the same calendar year. Summer = Jun, Jul, Aug.
 CREATE OR REPLACE TABLE RELIABILITY.MART.DOM_LOAD_ANNUAL COPY GRANTS AS
 SELECT
@@ -86,9 +83,8 @@ SELECT
 FROM RELIABILITY.STG.EIA930_DOM_HOURLY
 GROUP BY 1;
 
--- The 50 highest hours on record, ranked twice: as the record stood on
--- 31 December 2025 (the window Dominion's annual report describes) and as it
--- stands today.
+-- The 50 highest hours on record, ranked at two reference dates: 31 December
+-- 2025 (comparable with the annual report) and the load date.
 CREATE OR REPLACE TABLE RELIABILITY.MART.DOM_TOP50_HOURS COPY GRANTS AS
 WITH ranked AS (
   SELECT data_date, hour_no, utc_ts, demand_mw,
@@ -108,7 +104,7 @@ SELECT * FROM RELIABILITY.MART.DOM_LOAD_ANNUAL ORDER BY year;
 
 -- ---------- 4. Tests ----------
 -- T10. Impossible demand values (expected 2 rows, both 18 Oct 2021). These are
---      what the staging view sets to NULL. If more appear after a refresh, look.
+--      what the staging view sets to NULL. Review any additional rows after a refresh.
 SELECT data_date, hour_no, demand_mw_reported
 FROM RELIABILITY.STG.EIA930_DOM_HOURLY
 WHERE demand_mw_reported > 60000;
@@ -123,33 +119,30 @@ SELECT year, hours_reported FROM RELIABILITY.MART.DOM_LOAD_ANNUAL
 WHERE year BETWEEN 2019 AND 2025 AND hours_reported < 8700;
 
 -- ---------- 5. Analysis ----------
--- Q7. The annual report says "38 of the 50 highest peak loads in DOM Zone
---     history have occurred since 1 January 2025". EIA's record starts in
---     July 2018, so older summers are not in it, and the count comes out
---     higher: 47 of 50 in 2025, the other 3 in 2024.
+-- Q7. The annual report states that 38 of the 50 highest peak loads in DOM
+--     Zone history occurred after 1 January 2025. EIA's record starts in
+--     July 2018, so earlier years are absent and the count is higher:
+--     47 of 50 in 2025, 3 in 2024.
 SELECT year, COUNT(*) AS hours_in_top50, MAX(demand_mw) AS highest_mw
 FROM RELIABILITY.MART.DOM_TOP50_HOURS
 WHERE rank_end_2025 <= 50
 GROUP BY 1 ORDER BY 1;
 
--- Q7b. The same count as the record stands today. Expect 46 of 50 in 2026.
+-- Q7b. The same count at the load date. Expect 46 of 50 in 2026.
 SELECT year, COUNT(*) AS hours_in_top50, MAX(demand_mw) AS highest_mw
 FROM RELIABILITY.MART.DOM_TOP50_HOURS
 WHERE rank_today <= 50
 GROUP BY 1 ORDER BY 1;
 
--- Q8. Winter or summer? The report says Dominion now peaks in winter.
---     2022 and 2025 were winter-peaking (Dec 2022 Winter Storm Elliott,
---     Jan 2025 cold snap). 2026 is a tie: 25,413 on 9 Feb at 8am against
---     25,384 on 3 Jul at 7pm.
+-- Q8. Winter vs summer peak by year. 2019, 2022 and 2025 were winter-peaking.
+--     2026: 25,413 MW on 9 February at 08:00 vs 25,384 MW on 3 July at 19:00.
 SELECT year, winter_peak_mw, summer_peak_mw,
        CASE WHEN winter_peak_mw > summer_peak_mw THEN 'winter' ELSE 'summer' END AS peak_season
 FROM RELIABILITY.MART.DOM_LOAD_ANNUAL ORDER BY 1;
 
--- Q9. The shape of the growth, 2019 to 2025.
---     Data centres run flat all day and all night, so they lift the lowest
---     hour of the year more than the highest. Expect: peak +26%, floor +52%,
---     median +32%, energy +32%.
+-- Q9. Growth 2019 to 2025 in peak, floor, median and energy. Round-the-clock
+--     load raises the lowest hour more than the highest. Expect: peak +26%,
+--     floor +52%, median +32%, energy +32%.
 SELECT
   ROUND(100 * (b.peak_mw   / a.peak_mw   - 1), 1) AS peak_growth_pct,
   ROUND(100 * (b.floor_mw  / a.floor_mw  - 1), 1) AS floor_growth_pct,
@@ -160,5 +153,5 @@ JOIN RELIABILITY.MART.DOM_LOAD_ANNUAL b ON a.year = 2019 AND b.year = 2025;
 
 -- ---------- 6. Power BI ----------
 -- BI_READER has SELECT on future tables in MART, so DOM_LOAD_ANNUAL and
--- DOM_TOP50_HOURS appear in Power BI on the next refresh. They feed the
--- Growth page: the top-50 card, the winter/summer columns and the growth cards.
+-- DOM_TOP50_HOURS are available to Power BI on the next refresh. They feed
+-- the Growth page.

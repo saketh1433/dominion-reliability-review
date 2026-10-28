@@ -31,9 +31,9 @@ CREATE STAGE IF NOT EXISTS RELIABILITY.RAW.PUDL_STAGE FILE_FORMAT = RELIABILITY.
 -- Upload via Snowsight (Data > Add Data > Load files into a stage) or SnowSQL:
 --   PUT file:///path/Reliability_2025_States.csv @RELIABILITY.RAW.EIA_STAGE;
 
--- ---------- 1. Raw tables: land everything as text ----------
--- Why text: the EIA export carries "1,115.500" and ".", so typing happens in
--- staging where it is visible and testable, not inside COPY where it is not.
+-- ---------- 1. Raw tables: all columns text ----------
+-- The EIA export contains values such as "1,115.500" and ".". Typing is done
+-- in the staging views, where failures are visible and testable.
 CREATE OR REPLACE TABLE RELIABILITY.RAW.EIA861_RELIABILITY_2025 (
   data_year            VARCHAR, utility_number VARCHAR, utility_name VARCHAR,
   state                VARCHAR, ownership      VARCHAR,
@@ -91,8 +91,8 @@ UNION ALL SELECT 'pudl_ami',   COUNT(*) FROM RELIABILITY.RAW.PUDL_AMI
 UNION ALL SELECT 'pudl_sales', COUNT(*) FROM RELIABILITY.RAW.PUDL_SALES;
 
 -- ---------- 2. Staging: one typed row per utility, state, year ----------
--- EIA 2025: unpivot the two blocks into one shape. A utility that filed IEEE
--- gets the IEEE row, one that filed "Other" gets that row.
+-- EIA 2025: unpivot the two column blocks. A utility that filed under IEEE
+-- produces the IEEE row and one that filed under "Other" produces that row.
 CREATE OR REPLACE VIEW RELIABILITY.STG.RELIABILITY_2025 AS
 WITH t AS (
   SELECT
@@ -136,8 +136,8 @@ WITH t AS (
 )
 SELECT *, 'EIA-861 final 2025' AS source FROM t;
 
--- PUDL 2013-2024: already one row per utility-state-year-standard, but both
--- standards appear as rows even when empty, so keep the one with data.
+-- PUDL 2013-2024: one row per utility-state-year-standard. Both standards
+-- appear as rows even when empty. Keep the rows with data.
 CREATE OR REPLACE VIEW RELIABILITY.STG.RELIABILITY_HIST AS
 SELECT
   YEAR(TRY_TO_DATE(report_date))                       AS year,
@@ -161,8 +161,8 @@ SELECT
 FROM RELIABILITY.RAW.PUDL_RELIABILITY
 WHERE saidi_w_med IS NOT NULL OR saidi_wo_med IS NOT NULL;
 
--- Union, then de-duplicate: seven small utilities filed BOTH standards in
--- 2021. Keep the IEEE row so customers are not double counted.
+-- Union, then de-duplicate: seven utilities filed under both standards in
+-- 2021. The IEEE row is kept so customers are counted once.
 CREATE OR REPLACE VIEW RELIABILITY.STG.RELIABILITY AS
 SELECT *
 FROM (

@@ -2,7 +2,7 @@
 -- DOMINION RELIABILITY MART  |  02: mart tables
 -- =====================================================================
 
--- Utility dimension with the groups the analysis needs
+-- Utility dimension with peer groups
 CREATE OR REPLACE TABLE RELIABILITY.MART.DIM_UTILITY COPY GRANTS AS
 SELECT DISTINCT
   utility_id, state,
@@ -20,8 +20,8 @@ SELECT DISTINCT
   END AS peer_group
 FROM RELIABILITY.STG.RELIABILITY;
 
--- Reliability fact. Store the additive numerators so any aggregate can be
--- recomputed correctly: SAIDI = customer minutes / customers, never AVG(SAIDI).
+-- Reliability fact. Stores the additive numerators used for aggregation:
+-- SAIDI = customer-minutes / customers.
 CREATE OR REPLACE TABLE RELIABILITY.MART.FCT_RELIABILITY COPY GRANTS AS
 SELECT
   utility_id || '|' || state AS utility_key,
@@ -50,7 +50,7 @@ SELECT
   f.saidi_ex_med / NULLIF(saidi_ex_med_py,0) - 1                                  AS saidi_yoy,
   -- share of the SAIDI change that came from frequency: ln SAIDI = ln SAIFI + ln CAIDI.
   -- NULLIF(x, 0) feeds LN a NULL instead of a zero: Snowflake raises on LN(0),
-  -- some small utilities report 0, and LN(NULL) is simply NULL.
+  -- some utilities report 0, and LN(NULL) returns NULL.
   LN(NULLIF(f.saifi_ex_med, 0) / NULLIF(saifi_ex_med_py, 0))
     / NULLIF(LN(NULLIF(f.saidi_ex_med, 0) / NULLIF(saidi_ex_med_py, 0)), 0)      AS frequency_share_of_change,
   AVG(f.saidi_ex_med) OVER (PARTITION BY f.utility_key ORDER BY f.year
@@ -60,10 +60,10 @@ SELECT
 FROM RELIABILITY.MART.FCT_RELIABILITY f
 JOIN RELIABILITY.MART.DIM_UTILITY d USING (utility_key);
 
--- Customer-weighted index for any group of utilities (the co-op benchmark).
--- Each denominator counts only the customers of utilities that reported that
--- numerator: a utility that filed SAIDI but not SAIFI (Prince George Electric,
--- 2025) must not dilute the group's SAIFI. See docs/03, P18.
+-- Customer-weighted indices by peer group (used for the co-op benchmark).
+-- Each denominator counts only the customers of utilities that reported the
+-- numerator. A utility that filed SAIDI but not SAIFI (Prince George Electric,
+-- 2025) would otherwise dilute the group SAIFI. See docs/03, P18.
 CREATE OR REPLACE VIEW RELIABILITY.MART.V_GROUP_INDEX COPY GRANTS AS
 SELECT
   d.peer_group, f.year,

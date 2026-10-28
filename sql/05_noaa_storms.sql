@@ -1,5 +1,5 @@
 -- =====================================================================
--- DOMINION RELIABILITY MART  |  05: NOAA storm events, the independent witness
+-- DOMINION RELIABILITY MART  |  05: NOAA storm events and the storm index
 -- Adds three raw tables, two staging views, one mart table, two tests and
 -- one analysis query. Run after 01 to 04.
 -- =====================================================================
@@ -61,8 +61,8 @@ UNION ALL SELECT 'territory', COUNT(*) FROM RELIABILITY.RAW.EIA861_SERVICE_TERRI
 
 -- ---------- 2. Staging ----------
 -- Dominion Energy Virginia's counties as 5-digit FIPS codes.
--- EIA writes "Alexandria City", NOAA writes "City of Alexandria", so try both
--- spellings. Two counties really are called James City and Charles City.
+-- EIA writes "Alexandria City" and NOAA writes "City of Alexandria". Both
+-- spellings are tried. James City and Charles City are county names.
 CREATE OR REPLACE VIEW RELIABILITY.STG.DOMINION_VA_COUNTIES AS
 WITH eia AS (
   SELECT county,
@@ -114,9 +114,9 @@ LEFT JOIN (
 WHERE e.state = 'VIRGINIA';
 
 -- ---------- 3. Mart: the storm index, one row per year ----------
--- A "storm county-day" is one county with at least one line-risk event on one
--- date. Counting county-days rather than events stops one squall line that
--- produced 40 wind reports in one county from counting 40 times.
+-- A storm county-day is one county with at least one line-risk event on one
+-- date. Counting county-days rather than events avoids counting multiple
+-- reports of one storm in one county more than once.
 CREATE OR REPLACE TABLE RELIABILITY.MART.STORM_INDEX COPY GRANTS AS
 WITH days AS (
   SELECT year, county_id_fips, begin_yearmonth, begin_day,
@@ -150,7 +150,7 @@ SELECT MAX(begin_yearmonth) AS last_month FROM RELIABILITY.STG.NOAA_VA_EVENTS WH
 SELECT COUNT(*) AS unmapped_zone_rows FROM RELIABILITY.STG.NOAA_VA_EVENTS WHERE county_id_fips IS NULL;
 
 -- ---------- 5. Analysis ----------
--- Q6. Does NOAA's independent storm count move with Dominion's day-to-day minutes?
+-- Q6. Storm county-days vs Dominion's ex-MED SAIDI, by year
 WITH j AS (
   SELECT s.year, s.storm_county_days, s.wind_days, s.winter_days,
          f.saidi_ex_med, f.saifi_ex_med, f.storm_saidi
@@ -159,7 +159,7 @@ WITH j AS (
 )
 SELECT * FROM j ORDER BY year;
 
--- Q6b. The headline: correlations, and what 2025's weather alone would predict
+-- Q6b. Correlations and the 2025 prediction from the fit
 WITH j AS (
   SELECT s.year, s.storm_county_days, s.wind_days, f.saidi_ex_med, f.saifi_ex_med, f.storm_saidi
   FROM RELIABILITY.MART.STORM_INDEX s

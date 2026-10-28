@@ -14,7 +14,7 @@ for y in $(seq 2018 "$(date +%Y)"); do
     curl -fsSLO "$BASE/$f" || echo "  not available yet: $f"
   done
 done
-# A file that is really an HTML error page is small and starts with <!doctype
+# Remove any file that is an HTML error page rather than CSV
 for f in *.csv; do
   if head -c 15 "$f" | grep -qi '<!doctype'; then echo "removing HTML page $f"; rm -f "$f"; fi
 done

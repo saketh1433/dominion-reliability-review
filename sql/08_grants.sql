@@ -1,10 +1,10 @@
 -- =====================================================================
 -- DOMINION RELIABILITY MART  |  08: read-only access for Power BI
--- Run as ACCOUNTADMIN, one statement at a time. Replace the password
--- placeholder before running and never commit the real one.
+-- Run as ACCOUNTADMIN. Replace the password placeholder before running.
+-- Do not commit the password.
 -- =====================================================================
 
--- One role that can read the mart and nothing else.
+-- Read-only role on the mart.
 CREATE ROLE IF NOT EXISTS BI_READER;
 
 GRANT USAGE ON DATABASE RELIABILITY                     TO ROLE BI_READER;
@@ -20,9 +20,9 @@ GRANT SELECT ON FUTURE VIEWS  IN SCHEMA RELIABILITY.MART TO ROLE BI_READER;
 GRANT USAGE ON WAREHOUSE SNOWFLAKE_LEARNING_WH TO ROLE BI_READER;
 
 -- Service user for the Power BI connector. LEGACY_SERVICE is required for
--- username and password authentication from the connector; the default user
--- type fails with an unhelpful error. In a team setting this would be
--- key-pair authentication with the key in a secrets manager.
+-- username and password authentication from the connector. In a shared
+-- environment this would be key-pair authentication with the key in a
+-- secrets manager.
 CREATE USER IF NOT EXISTS POWERBI_SVC
   PASSWORD = '<set-a-strong-password-here-and-do-not-commit-it>'
   TYPE = LEGACY_SERVICE
