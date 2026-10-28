@@ -98,6 +98,10 @@ Ratios are not averaged. Numerators and denominators are summed separately and d
 | Commercial customers index | 108 | same with `customers` |
 | Smart meters installed | 100% | `STG.AMI`, `ami_share` |
 | On a time-varying rate | about 1% | EIA-861 Dynamic Pricing, time-based rate customers / customers |
+| Data centre contracted capacity | 16.5 GW (Jul 2023) to 53.8 GW (Jul 2026) | `data/reference/dominion_ir_series.csv`, from the earnings decks. Stages: SELOA (engineering), CLOA (construction), ESA (service agreement) |
+| Data centre sales, 2025 | 27.8 million MWh, 20% CAGR since 2016 | 4Q 2025 deck, slide 22. 27.8 TWh / 8,760 h = 3,170 MW average load |
+| Weather-normal sales growth, 2025 | total 4.5%, commercial 8.1%, residential 2.3% (DEV and DESC combined); DEV 5.4% | 4Q 2025 deck, slides 7 and 30 |
+| Reliability in the rate review | authorised ROE 9.80%, performance adjustment of plus or minus 0.50% on criteria including reliability. 25 bps of DEV earned ROE = $0.027 EPS (deck sensitivity) | 4Q 2025 deck, slides 42 and 48 |
 
 ## Measure naming
 

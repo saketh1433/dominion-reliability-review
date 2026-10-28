@@ -1,0 +1,70 @@
+series,period,value,unit,source_deck,slide
+data_center_contracted_capacity_total,2023-07,16.5,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_seloa,2023-07,8.7,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_cloa,2023-07,2.0,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_esa,2023-07,5.8,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_total,2024-07,21.4,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_seloa,2024-07,7.6,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_cloa,2024-07,5.8,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_esa,2024-07,8.0,GW,3Q 2024 earnings call slides (1 Nov 2024),13
+data_center_contracted_capacity_total,2024-12,40.2,GW,4Q 2024 earnings call slides (12 Feb 2025),18
+data_center_contracted_capacity_seloa,2024-12,26.2,GW,4Q 2024 earnings call slides (12 Feb 2025),18
+data_center_contracted_capacity_cloa,2024-12,5.2,GW,4Q 2024 earnings call slides (12 Feb 2025),18
+data_center_contracted_capacity_esa,2024-12,8.8,GW,4Q 2024 earnings call slides (12 Feb 2025),18
+data_center_contracted_capacity_total,2025-09,47.1,GW,3Q 2025 earnings call slides (31 Oct 2025),14
+data_center_contracted_capacity_seloa,2025-09,28.2,GW,3Q 2025 earnings call slides (31 Oct 2025),14
+data_center_contracted_capacity_cloa,2025-09,9.0,GW,3Q 2025 earnings call slides (31 Oct 2025),14
+data_center_contracted_capacity_esa,2025-09,9.8,GW,3Q 2025 earnings call slides (31 Oct 2025),14
+data_center_contracted_capacity_total,2025-12,48.5,GW,4Q 2025 earnings call slides (23 Feb 2026),19
+data_center_contracted_capacity_seloa,2025-12,27.4,GW,4Q 2025 earnings call slides (23 Feb 2026),19
+data_center_contracted_capacity_cloa,2025-12,11.0,GW,4Q 2025 earnings call slides (23 Feb 2026),19
+data_center_contracted_capacity_esa,2025-12,10.2,GW,4Q 2025 earnings call slides (23 Feb 2026),19
+data_center_contracted_capacity_total,2026-03,51.0,GW,1Q 2026 earnings call slides (1 May 2026),4
+data_center_contracted_capacity_seloa,2026-03,29.5,GW,1Q 2026 earnings call slides (1 May 2026),4
+data_center_contracted_capacity_cloa,2026-03,11.1,GW,1Q 2026 earnings call slides (1 May 2026),4
+data_center_contracted_capacity_esa,2026-03,10.4,GW,1Q 2026 earnings call slides (1 May 2026),4
+data_center_contracted_capacity_total,2026-07,53.8,GW,2Q 2026 earnings call slides (31 Jul 2026),5
+data_center_contracted_capacity_seloa,2026-07,32.4,GW,2Q 2026 earnings call slides (31 Jul 2026),5
+data_center_contracted_capacity_cloa,2026-07,9.4,GW,2Q 2026 earnings call slides (31 Jul 2026),5
+data_center_contracted_capacity_esa,2026-07,12.0,GW,2Q 2026 earnings call slides (31 Jul 2026),5
+dom_zone_data_center_delivery_point_requests,2020,21,count,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_delivery_point_requests,2021,47,count,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_delivery_point_requests,2022,73,count,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_delivery_point_requests,2023,76,count,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_delivery_point_requests,2024 YTD Sep,63,count,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_capacity_requested,2020,2.9,GW,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_capacity_requested,2021,4.6,GW,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_capacity_requested,2022,7.6,GW,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_capacity_requested,2023,10.8,GW,3Q 2024 earnings call slides (1 Nov 2024),14
+dom_zone_data_center_capacity_requested,2024 YTD Sep,12.8,GW,3Q 2024 earnings call slides (1 Nov 2024),14
+dev_data_center_sales,2025,27.8,million MWh,4Q 2025 earnings call slides (23 Feb 2026),22
+dev_data_center_sales_cagr_since_2016,2025,20,percent,4Q 2025 earnings call slides (23 Feb 2026),22
+weather_normal_sales_growth_total,2021,1.4,percent (DEV and DESC combined),4Q 2024 earnings call slides (12 Feb 2025),28
+weather_normal_sales_growth_total,2022,3.4,percent (DEV and DESC combined),4Q 2024 earnings call slides (12 Feb 2025),28
+weather_normal_sales_growth_total,2023,2.5,percent (DEV and DESC combined),4Q 2024 earnings call slides (12 Feb 2025),28
+weather_normal_sales_growth_total,2024,2.1,percent (DEV and DESC combined),4Q 2024 earnings call slides (12 Feb 2025),28
+weather_normal_sales_growth_total,2025,4.5,percent (DEV and DESC combined),4Q 2025 earnings call slides (23 Feb 2026),30
+weather_normal_sales_growth_total,LTM Q2 2026,4.1,percent (DEV and DESC combined),2Q 2026 earnings call slides (31 Jul 2026),16
+weather_normal_sales_growth_commercial,2024,4.4,percent (DEV and DESC combined),4Q 2024 earnings call slides (12 Feb 2025),28
+weather_normal_sales_growth_commercial,2025,8.1,percent (DEV and DESC combined),4Q 2025 earnings call slides (23 Feb 2026),30
+weather_normal_sales_growth_commercial,LTM Q2 2026,8.5,percent (DEV and DESC combined),2Q 2026 earnings call slides (31 Jul 2026),16
+weather_normal_sales_growth_residential,2024,0.2,percent (DEV and DESC combined),4Q 2024 earnings call slides (12 Feb 2025),28
+weather_normal_sales_growth_residential,2025,2.3,percent (DEV and DESC combined),4Q 2025 earnings call slides (23 Feb 2026),30
+weather_normal_sales_growth_residential,LTM Q2 2026,0.3,percent (DEV and DESC combined),2Q 2026 earnings call slides (31 Jul 2026),16
+dev_lse_weather_normal_sales_growth,2025,5.4,percent,4Q 2025 earnings call slides (23 Feb 2026),7
+dev_electric_customer_growth,2024,1.1,percent,4Q 2024 earnings call slides (12 Feb 2025),28
+dev_electric_customer_growth,2025,1.0,percent,4Q 2025 earnings call slides (23 Feb 2026),30
+dom_zone_reported_peak,2022-12-24,22189,MW,2Q 2024 earnings call slides (1 Aug 2024),17
+dom_zone_reported_peak,2023-07-28,21993,MW,2Q 2024 earnings call slides (1 Aug 2024),17
+dom_zone_reported_peak,2024-07-16,23127,MW,2Q 2024 earnings call slides (1 Aug 2024),17
+pjm_dom_zone_summer_peak_forecast_10yr_cagr,2025 forecast,6.3,percent,4Q 2024 earnings call slides (12 Feb 2025),17
+pjm_dom_zone_summer_peak_forecast_10yr_cagr,2026 forecast,5.4,percent,4Q 2025 earnings call slides (23 Feb 2026),7
+dev_capital_plan_2026_2030,total,54.8,USD billion,4Q 2025 earnings call slides (23 Feb 2026),45
+dev_capital_plan_2026_2030,electric_distribution,9.0,USD billion,4Q 2025 earnings call slides (23 Feb 2026),45
+dev_capital_plan_2026_2030,grid_transformation,2.8,USD billion,4Q 2025 earnings call slides (23 Feb 2026),45
+dev_capital_plan_2026_2030,electric_transmission,13.9,USD billion,4Q 2025 earnings call slides (23 Feb 2026),45
+dev_biennial_review_authorized_roe,2025 to 2026,9.80,percent,4Q 2025 earnings call slides (23 Feb 2026),48
+dev_biennial_review_performance_adjustment,2025 to 2026,0.50,percent (plus or minus; reliability among criteria),4Q 2025 earnings call slides (23 Feb 2026),48
+dev_eps_sensitivity_per_25bps_earned_roe,2026,0.027,USD per share,4Q 2025 earnings call slides (23 Feb 2026),42
+dev_data_centers_served,2025,450,count (from more than 50 customers),4Q 2025 earnings call slides (23 Feb 2026),20
+dev_data_center_connections_per_year_since_2013,2024,15,count per year (average),4Q 2024 earnings call slides (12 Feb 2025),45

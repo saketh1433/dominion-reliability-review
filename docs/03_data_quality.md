@@ -26,6 +26,7 @@ Found by profiling RAW (`sql/00_look_first.sql`) or by a test on the first load.
 | P16 | EIA-930 | `EIA930_SUBREGION_2018_Jan_Jun.csv` is served as an HTML error page (subregion reporting starts July 2018) | Not loaded. The download script removes it | `scripts/download_eia930.sh` |
 | P17 | EIA-861 vs annual report | EIA customers for Dominion VA are 2,675,735 and the annual report states 2,809k | Not an error. The report figure includes North Carolina. Stated on the scorecard | report |
 | P18 | EIA-861 | Prince George Electric filed SAIDI but no SAIFI for 2025. A group denominator summing all members' customers would include its 13,341 customers and understate the co-op SAIFI (1.849 instead of 1.887) | `V_GROUP_INDEX` denominators sum only the customers of utilities that reported the numerator. The co-op index (each year relative to 2015) is unchanged to one decimal (137.4) | `02`, `V_GROUP_INDEX` |
+| P19 | EIA-930 vs company reports | Dominion's earnings decks report DOM zone peaks of 22,189 MW (24 Dec 2022), 21,993 MW (28 Jul 2023) and 23,127 MW (16 Jul 2024). EIA-930 hourly maxima on the same days are 22,415, 22,050 and 23,220 MW, within 1.1% | Confirms EIA-930 as a proxy for the zone load. The difference is hourly-integrated EIA data against PJM's reported peak | `DOM_LOAD_ANNUAL`, `data/reference/dominion_ir_series.csv` |
 
 ## Tests
 

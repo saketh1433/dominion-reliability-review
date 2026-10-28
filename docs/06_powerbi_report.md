@@ -23,7 +23,7 @@ Three columns, one question each. Visuals are copies of those on the other pages
 | Column | Question | Visuals |
 |---|---|---|
 | 1 | Was the 2025 increase explained by weather? | Card 133 (matches report), card 53% storm share, stacked columns (ordinary vs major event days), cards "predicted from weather 145 / actual 144" |
-| 2 | What is the weather-adjusted trend? | Weather-adjusted line (about 134 throughout), co-op index (137 vs 114), text box on hardening coverage (about 3% of circuits, 2 to 4 minutes against a yearly weather swing of about 15) |
+| 2 | What is the weather-adjusted trend? | Weather-adjusted line (about 134 throughout), co-op index (137 vs 114), text box on hardening coverage (about 3% of circuits, 2 to 4 minutes against a yearly weather swing of about 15) and on the biennial review (authorised ROE 9.80%, performance adjustment of plus or minus 0.50% with reliability among the criteria) |
 | 3 | How is the load changing? | Cards +52% base load and 47 of 50, hour-of-day columns, smart meter bars |
 
 ### 1. Scorecard
@@ -44,7 +44,7 @@ Bar chart (twelve peers, three-year average, ascending), quadrant scatter (all t
 
 ### 5. Growth
 Headline: *Load is growing fastest at night. Smart meters are installed. Time-varying rates are not in use.*
-Hour-of-day columns, three cards, winter/summer columns, sales index line, smart meter bars.
+Hour-of-day columns, three cards, winter/summer columns, sales index line, smart meter bars. Optional: stacked columns of data centre contracted capacity by stage (SELOA, CLOA, ESA) from `dominion_ir_series.csv`, July 2023 to July 2026.
 
 ### 6. Data notes
 Headline: *What was checked and what public data cannot show.*
@@ -62,6 +62,7 @@ Table of the twelve tests with result and note (from the `Tests` sheet, or from 
 | `SAIDI_WEATHER_ADJUSTED` | Snowflake | 0, 3 |
 | `DOM_LOAD_ANNUAL`, `DOM_TOP50_HOURS`, `DOM_LOAD_PROFILE` | Snowflake | 0, 5 |
 | `LoadGrowth`, `Programmes2025`, `Reconciliation`, `Tests` | Workbook sheets | 1, 5, 6 |
+| `dominion_ir_series` | `data/reference/dominion_ir_series.csv` | 0, 5 (contracted capacity, rate review text) |
 
 ## Refresh
 

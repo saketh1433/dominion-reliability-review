@@ -2,6 +2,12 @@
 
 Loads and definition changes, with row counts and any test whose result changed.
 
+## 2026-10-28  v1.2  Earnings-deck series and peak validation
+
+- Added `data/reference/dominion_ir_series.csv`: 69 values transcribed from Dominion's quarterly earnings decks (1Q 2024 to 2Q 2026), each with deck and slide: data centre contracted capacity by stage, delivery point requests, data centre sales, weather-normal sales growth by class, reported DOM zone peaks, capital plan lines, biennial review terms.
+- P19: EIA-930 hourly maxima match Dominion's reported DOM zone peaks on the same days within 1.1% (24 Dec 2022, 28 Jul 2023, 16 Jul 2024).
+- Documentation rewritten in neutral technical style (v1.1 to v1.2 interval).
+
 ## 2026-10-28  v1.1  Transformation walkthrough and source links
 
 - Added `docs/08_transformations.md`: processing chain with five worked examples on source rows.

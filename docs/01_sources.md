@@ -16,6 +16,7 @@ Source register: publisher, vintage, grain, row counts loaded, licence, direct l
 | S8 | EIA-930 Hourly Demand by Subregion, six-month CSV files | EIA | July 2018 to 22 Oct 2026 | balancing authority x subregion x hour | 6,077,232 (72,864 for PJM/DOM) | Public domain |
 | S9 | Dominion Energy 2025 Annual Report | Dominion Energy | Published 2026 | document | reference only | Company publication, quoted for comparison |
 | S10 | Virginia SCC grid transformation filings, Dominion grid resiliency pages | Virginia State Corporation Commission, Dominion Energy | 2025 to 2026 | document | reference only | Public filings |
+| S11 | Dominion Energy quarterly earnings call slides, 1Q 2024 to 2Q 2026 (ten decks) | Dominion Energy Investor Relations | May 2024 to July 2026 | document | figures transcribed to `data/reference/dominion_ir_series.csv` with deck and slide number | Company publication, quoted for comparison |
 
 ## Where each file lives in this repository
 
@@ -29,7 +30,7 @@ Source register: publisher, vintage, grain, row counts loaded, licence, direct l
 | S6 | `data/reference/zone_county_correlation.csv` | Yes | Lookup |
 | S7 | `data/reference/Service_Territory_2025_Counties_States.csv` | Yes | Lookup |
 | S8 | not committed (420 MB) | No | `scripts/download_eia930.sh` fetches the 17 files |
-| S9, S10 | not committed | No | Copyrighted documents. Page references are given where a figure is quoted |
+| S9, S10, S11 | not committed | No | Copyrighted documents. Page or slide references are given where a figure is quoted. S11 figures are transcribed to `data/reference/dominion_ir_series.csv` |
 
 ## Direct links
 
@@ -45,6 +46,7 @@ Landing page, file used, field documentation and licence for each source.
 | S9 Dominion Energy 2025 Annual Report | https://investors.dominionenergy.com/ | https://s2.q4cdn.com/510812146/files/doc_downloads/2026/03/17/Dominion-Energy-2025-Annual-Report.pdf . The SEC-filed annual report (Form ARS) is at https://www.sec.gov/Archives/edgar/data/715957/000119312526115192/dei-ars-12312025.pdf and the 10-K at https://www.sec.gov/Archives/edgar/data/715957/000119312526063120/d-20251231.htm | Page references are given wherever a figure is quoted (133 and 130 on page 10, the 38-of-50 peak statement, winter peak, customers 2,809k) | Company publication, quoted for comparison only |
 | S10 Dominion grid resiliency materials | https://www.dominionenergy.com/projects-and-facilities/electric-projects/energy-grid-transformation/grid-resiliency-projects | Same page and its FAQ | Hardening and undergrounding figures quoted in `docs/04_decisions.md` D14 | Company publication |
 | S10 Virginia SCC filings | https://www.scc.virginia.gov/ , case documents through the SCC docket search | Grid transformation plan filings and annual reliability reports by case number | | Public filings |
+| S11 Earnings call slides | https://investors.dominionenergy.com/ (Events and Presentations) | Quarterly decks, 1Q 2024 to 2Q 2026. Each value in `dominion_ir_series.csv` names its deck and slide | Slide footnotes define weather-normal sales, contracted capacity stages (SELOA, CLOA, ESA) and the biennial review terms | Company publication |
 
 To verify a figure: open the file at the link, locate the row identified in `docs/08_transformations.md` (line numbers for EIA-930 rows, event IDs for NOAA rows) and compare it with the value quoted there.
 
