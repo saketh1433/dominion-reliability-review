@@ -1,0 +1,20 @@
+# Large raw downloads: re-created by scripts/
+data/raw/
+
+# Power BI files embed connection details and are binary
+*.pbix
+
+# Secrets, in any form
+*.env
+.env*
+*.key
+*.p8
+*.pem
+secrets/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+__pycache__/
+.ipynb_checkpoints/
