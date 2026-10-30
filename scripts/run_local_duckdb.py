@@ -96,4 +96,28 @@ dominion_count = con.execute(
 ).fetchone()[0]
 if dominion_count != 1:
     raise RuntimeError(f"Expected one Dominion VA 2025 record, found {dominion_count}")
+# Business-critical figure checks: make sure the rolling averages and
+# decomposition printed in the README still agree with the actual mart.
+dom = dict(con.execute(
+    "SELECT year, saidi_ex_med FROM mart.FCT_RELIABILITY "
+    "WHERE utility_key = '19876|VA' AND year BETWEEN 2022 AND 2025"
+).fetchall())
+for year, expected in ((2022, 136.047), (2023, 123.322), (2024, 131.300), (2025, 144.400)):
+    if abs(dom.get(year, float("nan")) - expected) > 0.002:
+        raise RuntimeError(f"Dominion VA SAIDI mismatch: {year} expected {expected}, found {dom.get(year)}")
+
+avg_2024 = sum(dom[y] for y in (2022, 2023, 2024)) / 3
+avg_2025 = sum(dom[y] for y in (2023, 2024, 2025)) / 3
+if abs(avg_2024 - 130.2) > 0.06 or abs(avg_2025 - 133.0) > 0.06:
+    raise RuntimeError(f"Rolling SAIDI averages changed: {avg_2024}, {avg_2025}")
+
+# The near-zero SAIDI change in 2019 made the original share metric
+# show an uninterpretable value near -2,570%.
+share_2019 = con.execute(
+    "SELECT frequency_share_of_change FROM mart.V_TREND "
+    "WHERE utility_key = '19876|VA' AND year = 2019"
+).fetchone()[0]
+if share_2019 is not None:
+    raise RuntimeError(f"Expected suppressed near-zero 2019 frequency share, got {share_2019}")
+print(f"Business check: rolling SAIDI averages = {avg_2024:.1f} and {avg_2025:.1f} minutes.")
 print("Core reliability checks passed. NOAA/EIA-930 checks require the full Snowflake pipeline.")
