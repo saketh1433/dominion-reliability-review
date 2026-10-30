@@ -1,6 +1,6 @@
 # Data files
 
-I kept the original data separate from the supporting files and the results of my analysis. That makes it easier to trace a number in the dashboard back to where it came from.
+The original data files are stored separately from the supporting files and the results of my analysis making it easier to trace a number in the dashboard back to where it came from.
 
 ## What's in each folder?
 
