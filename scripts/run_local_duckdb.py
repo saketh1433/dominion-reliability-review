@@ -1,9 +1,11 @@
-"""Run the core Snowflake SQL files (01 to 04) on DuckDB, locally, with no account.
+"""Run the EIA reliability pipeline (SQL 01-04) in a local DuckDB database.
 
-Proves the mart logic end to end from data/input/. Only dialect differences are
+Rebuilds the core reliability mart and checks six tests. It does not verify
+the full NOAA/EIA-930 pipeline, which requires additional raw downloads.
+Dialect differences are
 patched (TRY_TO_NUMBER, YEAR(), schema names, file formats). Covers the
 reliability mart; the NOAA (05) and EIA-930 (06, 07) steps run in Snowflake.
-Run with: python -I scripts/run_local_duckdb.py   (pip install duckdb pandas)
+Run with: pip install -r requirements.txt && python -I scripts/run_local_duckdb.py
 """
 import duckdb, re, sys
 from pathlib import Path
@@ -49,8 +51,8 @@ print("fact rows:", con.execute("select count(*), min(year), max(year) from mart
 print("\n==== ANALYSIS (Q1-Q5) ====")
 sql03 = translate((ROOT / "sql" / "03_analysis.sql").read_text())
 for block in sql03.split(";"):
-    label = re.search(r"(?m)^\\s*--\\s*(Q\\d+[a-z]?)", block)
-    stmt = re.sub(r"(?m)^\\s*--[^\\n]*(?:\\n|$)", "", block).strip()
+    label = re.search(r"(?m)^\s*--\s*(Q\d+[a-z]?)", block)
+    stmt = re.sub(r"(?m)^\s*--[^\n]*(?:\n|$)", "", block).strip()
     if not stmt:
         continue
     try:
@@ -69,8 +71,8 @@ observed = {}
 print("\n==== TESTS ====")
 sql04 = translate((ROOT / "sql" / "04_tests.sql").read_text())
 for block in sql04.split(";"):
-    match = re.search(r"(?m)^\\s*--\\s*(T[1-6])\\.", block)
-    stmt = re.sub(r"(?m)^\\s*--[^\\n]*(?:\\n|$)", "", block).strip()
+    match = re.search(r"(?m)^\s*--\s*(T[1-6])\.", block)
+    stmt = re.sub(r"(?m)^\s*--[^\n]*(?:\n|$)", "", block).strip()
     if not stmt:
         continue
     if not match:
