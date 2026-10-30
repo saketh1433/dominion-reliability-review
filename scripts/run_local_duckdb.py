@@ -98,12 +98,12 @@ if dominion_count != 1:
     raise RuntimeError(f"Expected one Dominion VA 2025 record, found {dominion_count}")
 # Business-critical figure checks: make sure the rolling averages and
 # decomposition printed in the README still agree with the actual mart.
-dom = dict(con.execute(
+dom = {year: float(value) for year, value in con.execute(
     "SELECT year, saidi_ex_med FROM mart.FCT_RELIABILITY "
     "WHERE utility_key = '19876|VA' AND year BETWEEN 2022 AND 2025"
-).fetchall())
+).fetchall()}
 for year, expected in ((2022, 136.047), (2023, 123.322), (2024, 131.300), (2025, 144.400)):
-    if abs(dom.get(year, float("nan")) - expected) > 0.002:
+    if year not in dom or abs(dom[year] - expected) > 0.002:
         raise RuntimeError(f"Dominion VA SAIDI mismatch: {year} expected {expected}, found {dom.get(year)}")
 
 avg_2024 = sum(dom[y] for y in (2022, 2023, 2024)) / 3
