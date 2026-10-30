@@ -70,14 +70,14 @@ expected_rows = {"T1": 0, "T2": 0, "T3": 4, "T4": 0, "T5": 13, "T6": 0}
 observed = {}
 print("\n==== TESTS ====")
 sql04 = translate((ROOT / "sql" / "04_tests.sql").read_text())
-for block in sql04.split(";"):
-    match = re.search(r"(?m)^\s*--\s*(T[1-6])\.", block)
-    stmt = re.sub(r"(?m)^\s*--[^\n]*(?:\n|$)", "", block).strip()
-    if not stmt:
-        continue
-    if not match:
-        raise RuntimeError("Unlabelled data-quality test; give it a T1-T6 label")
-    name = match.group(1)
+# Strip complete comment lines before splitting on semicolons. SQL comments
+# can themselves contain semicolons, which must not create phantom queries.
+labels = re.findall(r"(?m)^\s*--\s*(T[1-6])\.", sql04)
+clean_sql04 = re.sub(r"(?m)^\s*--[^\n]*(?:\n|$)", "", sql04)
+statements = [q.strip() for q in clean_sql04.split(";") if q.strip()]
+if labels != list(expected_rows) or len(statements) != len(labels):
+    raise RuntimeError(f"QA definitions changed: labels={labels}, statements={len(statements)}")
+for name, stmt in zip(labels, statements):
     df = con.execute(stmt).df()
     observed[name] = len(df)
     status = "PASS" if len(df) == expected_rows[name] else "FAIL"
