@@ -4,13 +4,17 @@
 
 ## Why I did this
 
-Dominion reported that its three-year average outage duration rose from about **130 minutes** (2022–2024) to **133 minutes** (2023–2025), excluding major event days. These are overlapping, rolling averages—not two separate three-year periods.
+Dominion reported that its rolling three-year average SAIDI (outage minutes per customer) rose from about **130 minutes** (2022–2024) to **133 minutes** (2023–2025), excluding major event days. These are overlapping, rolling averages—not two separate three-year periods.
 
 I wanted to look beyond the headline: **Were customers losing power more often, were interruptions lasting longer, and how much context could weather and demand data provide?**
 
 ## What I found
 
 ### 1. Interruption frequency is the more useful place to investigate
+
+![Change in Dominion reliability measures, 2023 to 2025](figures/reliability-change.svg)
+
+*Chart recreated from the reported EIA-861 values; this is not a screenshot of Power BI.*
 
 From 2023 to 2025, Dominion Virginia's reported reliability measures (excluding major event days) changed as follows:
 
@@ -38,6 +42,10 @@ Separately, EIA reports **306.7 minutes with all events** versus **144.4 excludi
 
 ### 3. Demand is changing even outside peak hours
 
+![Change in PJM DOM demand from 2019 to 2025](figures/demand-growth.svg)
+
+*Chart recreated from EIA-930 figures; this is not a screenshot of Power BI.*
+
 EIA-930 records for the broader **PJM DOM subregion** show that between 2019 and 2025:
 
 - The highest hourly demand increased about **26%**.
@@ -56,6 +64,32 @@ The public data helps narrow down the questions. **It cannot identify the right 
 I combined annual utility reliability data from **EIA-861** (historical years standardized by **PUDL**, plus the 2025 EIA release), storm records from **NOAA**, and hourly demand from **EIA-930**. I used SQL to make inconsistent formats comparable, check duplicates and missing values, calculate annual measures, and prepare the data for Power BI.
 
 The technical implementation and checks are available below, but the focus of this review is **what the numbers mean and what I'd investigate next**.
+
+## How the analysis is organized
+
+The work has three steps: **bring together the public reports, check and standardize the numbers in SQL, then explain the results in Power BI**. Each source addresses a different question; I did not merge weather, demand and reliability into one giant record.
+
+| Material | Where to look |
+| --- | --- |
+| Source data and annual results | [data/](data/) |
+| Cleaning, calculations and tests | [sql/](sql/) |
+| Supporting explanations and audit trail | [docs/](docs/) |
+| Power BI measures and workbook | [powerbi/](powerbi/) |
+
+## How to check the work
+
+The core reliability tables can be recreated locally using the committed EIA/PUDL files:
+
+```bash
+python -m pip install -r requirements.txt
+python -I scripts/run_local_duckdb.py
+```
+
+This runner covers the reliability SQL and its six checks (T1-T6). NOAA and EIA-930 are separate pipelines with six further SQL checks. The local runner does **not** reproduce the entire Power BI report or its 2025 weather fit.
+
+The project includes the Power BI measure definitions and supporting workbook, but **not a .pbix dashboard file**. The two charts above are reproductions of selected findings from the reported figures, not exports from Power BI Desktop.
+
+For data attribution, see [NOTICE.md](NOTICE.md) and [source notes](docs/01_sources.md). Detailed field mappings and known source anomalies are kept in [docs/](docs/) for reproducibility.
 
 ## Explore the project
 

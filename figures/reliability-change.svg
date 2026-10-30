@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="340" viewBox="0 0 840 340" role="img" aria-labelledby="title desc">
+<title id="title">Dominion Virginia reliability measures changed from 2023 to 2025</title>
+<desc id="desc">SAIDI increased 17.1 percent, SAIFI increased 13.3 percent, and CAIDI increased 3.3 percent, all excluding major event days.</desc>
+<rect width="840" height="340" rx="12" fill="#ffffff"/>
+<text x="36" y="45" fill="#172b45" font-size="25" font-weight="700" font-family="Arial, sans-serif">What drove the increase in outage minutes?</text>
+<text x="36" y="72" fill="#586579" font-size="15" font-family="Arial, sans-serif">Dominion Virginia, 2023 to 2025, excluding major event days</text>
+<text x="36" y="110" fill="#263b54" font-size="16" font-family="Arial, sans-serif">Outage minutes / customer (SAIDI)</text>
+<rect x="36" y="120" width="650" height="20" rx="4" fill="#edf1f6"/>
+<rect x="36" y="120" width="555.8" height="20" rx="4" fill="#1c62ad"/>
+<text x="707" y="138" fill="#172b45" font-size="21" font-weight="700" font-family="Arial, sans-serif">+17.1%</text>
+<text x="36" y="181" fill="#263b54" font-size="16" font-family="Arial, sans-serif">Interruptions / customer (SAIFI)</text>
+<rect x="36" y="191" width="650" height="20" rx="4" fill="#edf1f6"/>
+<rect x="36" y="191" width="432.3" height="20" rx="4" fill="#2c7bca"/>
+<text x="707" y="209" fill="#172b45" font-size="21" font-weight="700" font-family="Arial, sans-serif">+13.3%</text>
+<text x="36" y="252" fill="#263b54" font-size="16" font-family="Arial, sans-serif">Minutes / interruption (CAIDI)</text>
+<rect x="36" y="262" width="650" height="20" rx="4" fill="#edf1f6"/>
+<rect x="36" y="262" width="107.2" height="20" rx="4" fill="#7c9cbf"/>
+<text x="707" y="280" fill="#172b45" font-size="21" font-weight="700" font-family="Arial, sans-serif">+3.3%</text>
+<text x="36" y="326" fill="#68758a" font-size="12" font-family="Arial, sans-serif">Source: EIA-861 via project reliability tables. Bars show changes in reported indices, not outage causes.</text>
+</svg>

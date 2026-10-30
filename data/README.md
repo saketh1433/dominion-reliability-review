@@ -25,3 +25,5 @@ The original data files are stored separately from the supporting files and the 
 They are too large to keep in this repository. The download scripts in [`scripts/`](../scripts/) retrieve them into a local `data/raw/` folder, which Git ignores. **So `raw/` won't appear in the GitHub folder listing.** The smaller files needed to reproduce the core reliability analysis are included here.
 
 I didn't manually change numbers to make the charts. The cleaning and calculations are defined in [`sql/`](../sql/). For exact sources and file counts, see [Sources](../docs/01_sources.md); for worked examples showing how a source row becomes a result, see [Transformations](../docs/08_transformations.md).
+
+**Output format note:** `data/output/dom_annual.csv` is a compact saved snapshot, not an exact export of every column in `MART.DOM_LOAD_ANNUAL`. Its year column is named `yr` (rather than `year`), and it does not include `peak_mw` or `hours_missing`. Use the SQL mart definition for the full set of fields.

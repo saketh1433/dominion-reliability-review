@@ -44,23 +44,54 @@ for s in views: con.execute(s)
 for s in translate(open(SQL + "02_mart.sql").read()).split(";"):
     if s.strip(): con.execute(s)
 print("fact rows:", con.execute("select count(*), min(year), max(year) from mart.FCT_RELIABILITY").fetchone())
-# 03 analysis
-sql03 = translate(open(SQL + "03_analysis.sql").read())
-for block in re.split(r"\n(?=-- Q)", sql03):
-    title = block.strip().split("\n")[0]
-    for s in block.split(";"):
-        if not s.strip() or s.strip().startswith("--") and "SELECT" not in s.upper(): continue
-        try:
-            res = con.execute(s)
-            if s.strip().upper().lstrip("-").strip().startswith(("SELECT","WITH")):
-                print("\n", title); print(res.df().to_string(index=False))
-        except Exception as e:
-            print("\nFAILED", title, e, s[:200]); sys.exit(1)
-# 04 tests
-print("\n==== TESTS")
-for s in translate(open(SQL + "04_tests.sql").read()).split(";"):
-    if "SELECT" in s.upper():
-        name = re.search(r"-- (T\d\..*)", s)
-        df = con.execute(s).df()
-        print(name.group(1) if name else "", "->", len(df), "rows");
-        if len(df) and len(df) < 20: print(df.to_string(index=False))
+# 03 analysis: strip SQL comments before deciding whether the statement returns rows.
+# Earlier code silently skipped queries whose first line was a comment.
+print("\n==== ANALYSIS (Q1-Q5) ====")
+sql03 = translate((ROOT / "sql" / "03_analysis.sql").read_text())
+for block in sql03.split(";"):
+    label = re.search(r"(?m)^\\s*--\\s*(Q\\d+[a-z]?)", block)
+    stmt = re.sub(r"(?m)^\\s*--[^\\n]*(?:\\n|$)", "", block).strip()
+    if not stmt:
+        continue
+    try:
+        res = con.execute(stmt)
+    except Exception as exc:
+        print("FAILED analysis", label.group(1) if label else "", str(exc), file=sys.stderr)
+        sys.exit(1)
+    if stmt.upper().startswith(("SELECT", "WITH")):
+        print("\n", label.group(1) if label else "Analysis")
+        print(res.df().to_string(index=False))
+
+# 04 tests: assert expected row counts rather than merely printing them.
+# T3 contains four documented source anomalies; T5 returns one row per year.
+expected_rows = {"T1": 0, "T2": 0, "T3": 4, "T4": 0, "T5": 13, "T6": 0}
+observed = {}
+print("\n==== TESTS ====")
+sql04 = translate((ROOT / "sql" / "04_tests.sql").read_text())
+for block in sql04.split(";"):
+    match = re.search(r"(?m)^\\s*--\\s*(T[1-6])\\.", block)
+    stmt = re.sub(r"(?m)^\\s*--[^\\n]*(?:\\n|$)", "", block).strip()
+    if not stmt:
+        continue
+    if not match:
+        raise RuntimeError("Unlabelled data-quality test; give it a T1-T6 label")
+    name = match.group(1)
+    df = con.execute(stmt).df()
+    observed[name] = len(df)
+    status = "PASS" if len(df) == expected_rows[name] else "FAIL"
+    print(f"{name}: {status} ({len(df)} rows; expected {expected_rows[name]})")
+    if status == "FAIL" or (name == "T3" and len(df)):
+        print(df.to_string(index=False))
+
+missing = set(expected_rows) - set(observed)
+if missing:
+    raise RuntimeError(f"Missing tests: {sorted(missing)}")
+bad = {k: (v, expected_rows[k]) for k, v in observed.items() if v != expected_rows[k]}
+if bad:
+    raise RuntimeError(f"Reliability tests failed (observed, expected): {bad}")
+dominion_count = con.execute(
+    "SELECT COUNT(*) FROM mart.FCT_RELIABILITY WHERE utility_key='19876|VA' AND year=2025"
+).fetchone()[0]
+if dominion_count != 1:
+    raise RuntimeError(f"Expected one Dominion VA 2025 record, found {dominion_count}")
+print("Core reliability checks passed. NOAA/EIA-930 checks require the full Snowflake pipeline.")

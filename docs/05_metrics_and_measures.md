@@ -1,51 +1,116 @@
-# What the numbers mean
+# 05. Metrics and measures
 
-## The three basic reliability measures
+> **At a glance:** Quick read: SAIDI is outage minutes per customer, SAIFI is interruptions per customer, and CAIDI is average minutes per customer-interruption. SAIDI = SAIFI x CAIDI. The recent increase is more frequency-driven.
 
-| Measure | Plain-English meaning | Calculation |
-| --- | --- | --- |
-| **SAIDI** | Average outage minutes per customer | Total customer-outage minutes ÷ customers |
-| **SAIFI** | Average number of interruptions per customer | Total customer-interruptions ÷ customers |
-| **CAIDI** | Average duration per customer-interruption | Total customer-outage minutes ÷ customer-interruptions |
+Definitions of the reliability indices and the calculation behind each figure on the report. DAX for all measures is in `powerbi/measures.dax`.
 
-**SAIDI = SAIFI × CAIDI.** This is why I looked at frequency and duration separately rather than just reporting total outage minutes.
+## Reliability indices
 
-A *customer-interruption* counts every affected customer. One equipment failure can interrupt many customers.
+Each index is derived from two annual totals reported by the utility, customer-interruptions and customer-minutes of interruption, divided by customers served.
 
-## Key Dominion results
+| Index | Name used on the report | Formula | Unit | Measures |
+|---|---|---|---|---|
+| SAIFI | Outages per customer | customer-interruptions / customers | interruptions per customer per year | Frequency of interruption |
+| SAIDI | Outage minutes per customer | customer-minutes / customers | minutes per customer per year | Total interruption time per customer |
+| CAIDI | Minutes to restore each outage | SAIDI / SAIFI | minutes per interruption | Average duration of an interruption |
 
-| Finding | Figure | What to know |
-| --- | --- | --- |
-| Three-year average SAIDI ending 2024 | **130.2 minutes** | Average of 2022, 2023 and 2024 |
-| Three-year average SAIDI ending 2025 | **133.0 minutes** | Average of 2023, 2024 and 2025; a **rolling** comparison |
-| 2025 annual SAIDI, excluding major event days | **144.4 minutes** | Different from the three-year figure |
-| 2025 SAIFI, excluding major event days | **1.32** | Interruptions per customer |
-| 2025 CAIDI, excluding major event days | **109.4 minutes** | Duration per customer-interruption |
-| 2025 SAIDI, including all events | **306.7 minutes** | About 52.9% of these minutes fall in the difference between the all-event and ex-MED measures |
+SAIDI = SAIFI x CAIDI by definition (test T2 checks the identity in the data). A change in SAIDI therefore decomposes into a frequency component and a duration component:
 
-From **2023 to 2025**, SAIDI increased about **17%**, SAIFI about **13%**, and CAIDI about **3%**. The recent increase in outage minutes is therefore associated **more with interruption frequency** than duration.
+ln(SAIDI2 / SAIDI1) = ln(SAIFI2 / SAIFI1) + ln(CAIDI2 / CAIDI1)
 
-The difference between the two EIA major-event measures is a **reporting classification**, not an independent measurement of NOAA storm-caused outages.
+The share of a SAIDI change attributable to frequency is ln(SAIFI ratio) / ln(SAIDI ratio). This is `V_TREND.frequency_share_of_change` and the `Frequency share` measures.
 
-## Weather analysis
+## Major event days
 
-I matched NOAA storm reports to Dominion's 104 Virginia service-area counties and counted each county/date once if a relevant event occurred.
+Each index is reported in two forms:
 
-- **2024:** 465 storm county-days; **2025:** 796.
-- Correlation with annual SAIDI, **2015–2024:** about **0.70** (R² about **0.48**).
-- Simple regression: predicted SAIDI ≈ **104.4 + 0.0514 × annual storm county-days**.
-- Using 2025's 796 county-days, predicted SAIDI was **145.3 minutes**, versus **144.4 actual**.
+- All events.
+- Excluding major event days (ex-MED): days classified as major events are removed. Regulatory reporting and the annual report use this form.
 
-I also calculated an exploratory **weather-adjusted 2025 SAIDI of 133.1 minutes**, by subtracting the regression prediction from actual SAIDI and adding back the 2015–2024 mean. This is **not** an observed reliability measure or proof that weather caused the change. The model has only ten training years and leaves out maintenance, assets and other factors. Its historical prediction errors are materially larger than the unusually close 2025 result.
+IEEE Standard 1366 defines a major event day statistically (a day whose SAIDI exceeds a threshold derived from the previous five years, the 2.5 beta method). Dominion, Alabama Power and some other utilities apply their own definition and file under EIA's "Other" standard. The report shows the method beside each peer figure.
 
-## Electricity demand
+**Major-event-day exclusion share** = (SAIDI all - SAIDI ex-MED) / SAIDI all. The existing SQL/DAX field names `storm_share` and `storm_saidi` are legacy labels: this difference is **not** an independent NOAA attribution of storm-caused outage minutes. For Dominion in 2025: (306.7 - 144.4) / 306.7 = 53%.
 
-For the broader **PJM DOM subregion**, EIA-930 shows these changes between 2019 and 2025:
+## Aggregation rule
 
-- Highest hourly demand: **19,803 → 24,957 MW** (**+26%**).
-- Lowest hourly demand: **7,167 → 10,903 MW** (**+52%**).
-- Average demand at around 4 AM rose about **41%**, versus about **27%** at 4 PM.
+Ratios are not averaged. Numerators and denominators are summed separately and divided once.
 
-These figures describe the **shape of electricity demand**, not the cause of distribution outages.
+| Not used | Used |
+|---|---|
+| `AVERAGE(saidi_ex_med)` across utilities | `SUM(cust_minutes_ex_med) / SUM(customers)` |
+| `AVERAGE(saidi_ex_med)` across years for one utility | `AVERAGEX(VALUES(year), [SAIDI ex MED])`: the customer-weighted value for each year, then the mean of the years |
 
-The full calculation definitions are in [`sql/`](../sql/) and [`powerbi/measures.dax`](../powerbi/measures.dax).
+## Report figures
+
+### Scorecard
+
+| Card | Value | Measure | Calculation |
+|---|---|---|---|
+| Outage minutes per customer, 3-year average 2023 to 2025 | 133.0 | `SAIDI 3yr ending 2025` | Customer-weighted SAIDI ex-MED for each of 2023, 2024, 2025, then the mean. Annual report page 10: 133 |
+| 3-year average 2022 to 2024 | 130.2 | `SAIDI 3yr ending 2024` | Same for 2022 to 2024. Report: 130 |
+| Customers served, 2025 | 2,675,735 | `Total Customers` filtered to 2025 | EIA `oth_customers`. Virginia only. The annual report's 2,809k includes North Carolina |
+| Outages per customer, 2025 | 1.32 | `SAIFI ex MED` | 2025 row |
+| Minutes to restore each outage, 2025 | 109.4 | `CAIDI ex MED` | SAIDI / SAIFI |
+| Including major storms, 2025 | 306.7 | `SAIDI all events` | 2025 row |
+| Storm share, 2025 | 53% | `Storm share` | (306.7 - 144.4) / 306.7 |
+
+### What moved
+
+| Figure | Value | Calculation |
+|---|---|---|
+| SAIFI 2019 -> 2025 | 1.24 -> 1.32, about +6% | `SAIFI change 2019 to 2025` |
+| CAIDI 2019 -> 2025 | 120.5 -> 109.4, -9% | `CAIDI change 2019 to 2025` |
+| SAIDI 2019 -> 2023 | -17.7%, 34% of it from frequency, 66% from duration | `SAIDI change 2019 to 2023`, `Frequency share 2019 to 2023` |
+| SAIDI 2023 -> 2025 | +17.1%, 79% from frequency | same pair for 2023 to 2025 |
+| Dashed lines at 2015 and 2020 | | 2015: outages recorded automatically from this year. 2020: lines up to 46 kV included from this year. Both are changes in what is counted |
+
+### Weather
+
+| Figure | Value | Calculation |
+|---|---|---|
+| Storm county-days, 2025 | 796 | `STORM_INDEX`. Second-highest in the record; 2019 was 851 |
+| Correlation, storm days vs SAIDI ex-MED, 2015 to 2024 | 0.70 | `CORR()` in `05_noaa_storms.sql` Q6b. With SAIFI: 0.41. With major-storm minutes: 0.47 |
+| Predicted from weather, 2025 | 145.3 | `REGR_INTERCEPT + REGR_SLOPE x 796`, fitted 2015 to 2024 |
+| Actual 2025 | 144.4 | EIA |
+| Weather-adjusted SAIDI | 2015: 122, 2019: 136, 2025: 133 | actual - predicted + mean(2015 to 2024) |
+| Ten-year average line | 134 | mean of actual SAIDI ex-MED, 2015 to 2024 |
+| Co-op index 2025 | 137 | all Virginia co-ops, customer-weighted SAIFI ex-MED, / 2015 value x 100 |
+| Dominion index 2025 | 114 | same for Dominion VA |
+
+### Fair comparison
+
+| Figure | Calculation |
+|---|---|
+| Minutes 2015 to 17, Minutes 2023 to 25 | `SAIDI 2015 to 2017`, `SAIDI 2023 to 2025`: three-year customer-weighted averages per utility |
+| Change | Minutes 2023 to 25 / Minutes 2015 to 17 - 1 |
+| Outages per customer 2021 to 25, Minutes per outage 2021 to 25 | `SAIFI 5yr`, `CAIDI 5yr`: five-year averages |
+| Quadrant lines | medians of the twelve peers: SAIFI 0.96, CAIDI 105 |
+| Major-storm rule | `IEEE 1366`, `Own rule` (EIA "Other"), `Changed` (filed under both across years) |
+
+### Growth
+
+| Figure | Value | Calculation |
+|---|---|---|
+| Base load, 2019 to 2025 | +52% | min hour of 2025 (10,903 MW) / min hour of 2019 (7,167) - 1 |
+| Peak load, 2019 to 2025 | +26% | max hour 24,957 / 19,803 - 1 |
+| Top-50 load hours in 2025 | 47 | `DOM_TOP50_HOURS` where `rank_end_2025 <= 50` and year = 2025 |
+| Growth by hour of day | 4am +41%, 4pm +27% | `DOM_LOAD_PROFILE`: mean MW in that hour, 2025 / 2019 - 1 |
+| Winter and summer peaks | 2025: 24,957 (23 Jan, 8am) vs 23,905 | `DOM_LOAD_ANNUAL` |
+| Commercial sales index 2025 | 165 (2013 = 100) | `STG.SALES`, Dominion VA, commercial class, `sales_mwh` / 2013 value |
+| Commercial customers index | 108 | same with `customers` |
+| Smart meters installed | 100% | `STG.AMI`, `ami_share` |
+| On a time-varying rate | about 1% | EIA-861 Dynamic Pricing, time-based rate customers / customers |
+| Data centre contracted capacity | 16.5 GW (Jul 2023) to 53.8 GW (Jul 2026) | `data/reference/dominion_ir_series.csv`, from the earnings decks. Stages: SELOA (engineering), CLOA (construction), ESA (service agreement) |
+| Data centre sales, 2025 | 27.8 million MWh, 20% CAGR since 2016 | 4Q 2025 deck, slide 22. 27.8 TWh / 8,760 h = 3,170 MW average load |
+| Weather-normal sales growth, 2025 | total 4.5%, commercial 8.1%, residential 2.3% (DEV and DESC combined); DEV 5.4% | 4Q 2025 deck, slides 7 and 30 |
+| Reliability in the rate review | authorised ROE 9.80%, performance adjustment of plus or minus 0.50% on criteria including reliability. 25 bps of DEV earned ROE = $0.027 EPS (deck sensitivity) | 4Q 2025 deck, slides 42 and 48 |
+
+## Measure naming
+
+Measures use the metric name (`SAIDI ex MED`, `CAIDI 5yr`). Plain-language names are used in visual titles. Columns keep their Snowflake names, so each card can be traced to a column in `docs/02_data_dictionary.md`.
+
+Formatting measures (`Bar colour`, `Dot colour`, `Row colour`, `SAIFI label`, `CAIDI label`, `Index label`, `Adjusted label`, `Hour colour`, `Change colour`) return colour strings or conditional labels and are listed at the end of `powerbi/measures.dax`.
+
+## Weather-model interpretation
+
+The regression was fitted on only ten annual observations (2015-2024); the correlation shows association, not causation. The unusually small 2025 prediction error should not be presented as evidence of consistent forecasting accuracy. Annual NOAA storm county-days and ex-MED SAIDI also differ in which event days they cover. Weather-adjusted SAIDI is a model-based comparison, not an audited reliability measure.
