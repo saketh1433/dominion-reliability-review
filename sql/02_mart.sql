@@ -29,6 +29,8 @@ SELECT
   customers,
   saidi_all, saifi_all, caidi_all,
   saidi_ex_med, saifi_ex_med, caidi_ex_med,
+  -- Legacy column names: these are *major-event-day exclusion differences*
+  -- in the EIA filing, not measured NOAA storm-caused outage minutes.
   saidi_all - saidi_ex_med                       AS storm_saidi,
   saifi_all - saifi_ex_med                       AS storm_saifi,
   saidi_all * customers                          AS cust_minutes_all,
