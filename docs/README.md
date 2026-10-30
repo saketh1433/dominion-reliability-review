@@ -1,19 +1,15 @@
-# How to read this project
+# How to read the project
 
-This folder explains the reasoning behind the Dominion reliability review. You do **not** need to read everything to understand the project.
+The [main README](../README.md) is the business summary. This folder holds the supporting evidence for anyone who wants to check the numbers or understand the choices.
 
-Start here:
+**Start with three documents:**
 
-1. [What the numbers mean](05_metrics_and_measures.md) — SAIDI, SAIFI, CAIDI, and the main results.
-2. [How the analysis was done](08_transformations.md) — three real examples, from source data to a result.
-3. [What I checked](03_data_quality.md) — cleaning choices and checks.
-4. [Why I made those choices](04_decisions.md) — strengths and limits of the analysis.
-5. [What the charts show](06_powerbi_report.md) — how to read the Power BI pages.
+1. [Metrics and measures](05_metrics_and_measures.md): what SAIDI, SAIFI, CAIDI, weather exposure and demand numbers actually mean.
+2. [Transformations](08_transformations.md): five worked examples tracing source data to calculations.
+3. [Decisions](04_decisions.md): why the methods were chosen and where the findings are limited.
 
-For reference: [Sources](01_sources.md), [Tables and columns](02_data_dictionary.md), [File naming](00_conventions.md), and [How to rerun it](07_governance_and_runbook.md).
+**For technical questions:** [Sources](01_sources.md) identifies datasets and attribution; [Data quality](03_data_quality.md) documents known anomalies and 12 checks; [Data dictionary](02_data_dictionary.md) lists the actual tables and fields; [Power BI guide](06_powerbi_report.md) maps findings to pages. [Conventions](00_conventions.md) and [Runbook](07_governance_and_runbook.md) are reference notes.
 
-## In one paragraph
+The `sql/` folder contains the executable calculations. These documents are explanatory records, not a substitute for the code or proof that any optional Snowflake automation has been deployed.
 
-I used public utility reliability reports to understand whether Dominion's outage-minutes trend was driven more by **more interruptions** or **longer interruptions**. I then checked how recorded storm exposure lined up with annual outage minutes and looked separately at changing hourly electricity demand. SQL helped me make inconsistent source files comparable; Power BI helped me communicate the results. This is a **public-data investigation**, not a feeder-level assessment or a causal estimate of the effect of storms.
-
-The original files are under [`data/`](../data/) and the calculations are in [`sql/`](../sql/). These notes explain those files; they are not the calculations themselves.
+**Core conclusion:** The increase in reported outage minutes from 2023 to 2025 was more associated with interruption frequency than interruption duration. NOAA storm exposure was positively correlated with SAIDI in a small exploratory model; the public data does not establish the cause of outages or which feeder should be upgraded.

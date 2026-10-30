@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="320" viewBox="0 0 840 320" role="img" aria-labelledby="title desc">
+<title id="title">DOM subregion demand grew between 2019 and 2025</title>
+<desc id="desc">Highest hourly demand grew 26 percent, from 19,803 to 24,957 megawatts. Lowest hourly demand grew 52 percent, from 7,167 to 10,903 megawatts.</desc>
+<rect width="840" height="320" rx="12" fill="#ffffff"/>
+<text x="36" y="46" fill="#172b45" font-size="25" font-weight="700" font-family="Arial, sans-serif">Demand rose across the day</text>
+<text x="36" y="73" fill="#586579" font-size="15" font-family="Arial, sans-serif">PJM DOM subregion, EIA-930, 2019 vs 2025</text>
+<text x="36" y="121" fill="#283a4e" font-size="18" font-weight="600" font-family="Arial, sans-serif">Highest hourly demand</text>
+<rect x="36" y="133" width="650" height="22" rx="4" fill="#e8edf3"/>
+<rect x="36" y="133" width="281.7" height="22" rx="4" fill="#376fb2"/>
+<text x="704" y="152" fill="#172b45" font-size="20" font-weight="700" font-family="Arial, sans-serif">+26%</text>
+<text x="36" y="180" fill="#69778b" font-size="14" font-family="Arial, sans-serif">19,803 MW in 2019 to 24,957 MW in 2025</text>
+<text x="36" y="221" fill="#283a4e" font-size="18" font-weight="600" font-family="Arial, sans-serif">Lowest hourly demand</text>
+<rect x="36" y="233" width="650" height="22" rx="4" fill="#e8edf3"/>
+<rect x="36" y="233" width="563.3" height="22" rx="4" fill="#5190bc"/>
+<text x="704" y="252" fill="#172b45" font-size="20" font-weight="700" font-family="Arial, sans-serif">+52%</text>
+<text x="36" y="279" fill="#69778b" font-size="14" font-family="Arial, sans-serif">7,167 MW in 2019 to 10,903 MW in 2025</text>
+<text x="36" y="308" fill="#68758a" font-size="12" font-family="Arial, sans-serif">Source: EIA-930 DOM. This region is broader than Dominion Virginia's retail service territory.</text>
+</svg>

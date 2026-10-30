@@ -1,42 +1,147 @@
-# What the data tables mean
+# 02. Data dictionary
 
-The main idea is simple: **start with the original files, clean them consistently, then calculate results from the cleaned records.** In Snowflake those three stages are named `RAW`, `STG` and `MART`.
+> **At a glance:** Quick read: RAW preserves imported records, STG standardizes them, and MART holds calculated metrics ready for analysis. For Dominion Virginia, the utility key is 19876|VA.
 
-## Main source tables
+Database `RELIABILITY`, three schemas.
 
-| Data | Typical record | Important fields |
-| --- | --- | --- |
-| EIA/PUDL reliability | One utility, state and year | `utility_id`, `state`, `year`, `customers`, `saidi_ex_med`, `saifi_ex_med`, `caidi_ex_med` |
-| PUDL meters | One utility, year and customer class | Smart meters, older meter counts |
-| PUDL sales | One utility, year, customer class and service type | Electricity sold (MWh), customers, revenue |
-| NOAA storm events | One reported weather event | Date, county or forecast zone, event type, magnitude |
-| EIA-930 demand | One subregion and hour | Date/time, subregion and demand in MW |
+| Schema | Rule | Who writes | Who reads |
+|---|---|---|---|
+| `RAW` | Every column `VARCHAR`. One table per source file, loaded by `COPY INTO`. Not modified after load. | load scripts | `STG` |
+| `STG` | Views. Typing (`TRY_TO_NUMBER`, `TRY_TO_DATE`), separator removal, unpivot, de-duplication. No business logic. | `01`, `05`, `06` | `MART` |
+| `MART` | Tables and views with the business logic: keys, peer groups, additive numerators, indexes, fits. | `02`, `05`, `06`, `07` | Power BI (`BI_READER`), analysts |
 
-## Tables used in analysis
+Grain is stated for each object. A utility is identified by `utility_key = utility_id || '|' || state`. EIA reports one row per utility per state, so a utility operating in two states is two reporting units.
 
-| Table/view | What you get from it |
-| --- | --- |
-| `STG.RELIABILITY` | Consistent annual reliability records covering 2013–2025 |
-| `MART.FCT_RELIABILITY` | Reliability figures plus customer-minutes and customer-interruptions for correct aggregation |
-| `MART.DIM_UTILITY` | Names and selected peer groups for utilities |
-| `MART.V_TREND` | Previous-year values and longer-term reliability trends |
-| `STG.AMI` | Smart-meter share by utility and year |
-| `STG.SALES` | Sales and customers by class and service type |
-| `MART.STORM_INDEX` | One row per year: storm county-days by type in Dominion Virginia's EIA service territory |
-| `MART.V_STORM_VS_SAIDI` | Annual storm exposure next to annual Dominion SAIDI |
-| `MART.SAIDI_WEATHER_ADJUSTED` | Exploratory regression predictions and adjusted figures |
-| `MART.DOM_LOAD_ANNUAL` | Yearly highest, lowest and average hourly electricity demand |
-| `MART.DOM_LOAD_PROFILE` | Average demand by hour of day for 2019 versus 2025 |
+## RAW
 
-For Dominion's Virginia reliability records, `utility_id = 19876` and `state = 'VA'`. Combining them as `19876|VA` avoids confusing one utility's records across states.
+### `RAW.EIA861_RELIABILITY_2025` (977 rows, one per utility-state, 2025)
+Sheet `Reliability_States` of EIA's `Reliability_2025.xlsx`. The sheet has two blocks side by side: utilities that report under IEEE 1366 fill the `ieee_*` columns, utilities with their own major-event rule fill the `oth_*` columns.
 
-## Units to watch
+| Column | Meaning |
+|---|---|
+| `data_year`, `utility_number`, `utility_name`, `state`, `ownership` | Identity. `ownership` is EIA's entity type (Investor Owned, Cooperative, Municipal, ...) |
+| `ieee_saidi_all`, `ieee_saifi_all`, `ieee_caidi_all` | All events, IEEE 1366 filers |
+| `ieee_saidi_ex_med`, `ieee_saifi_ex_med`, `ieee_caidi_ex_med` | Excluding major event days (IEEE 1366 2.5 beta method) |
+| `ieee_saidi_los`, `ieee_saifi_los`, `ieee_caidi_los` | Excluding loss-of-supply events |
+| `ieee_customers`, `ieee_max_kv`, `ieee_auto_recorded` | Customers served, highest distribution voltage, whether outages are logged automatically (OMS) |
+| `oth_saidi_all` ... `oth_caidi_ex_med` | Same six metrics for utilities using their own storm rule |
+| `oth_customers`, `oth_inactive_included`, `oth_momentary_def`, `oth_max_kv`, `oth_auto_recorded` | Same, plus the definition of a momentary interruption the utility applies |
 
-- **SAIDI:** outage minutes **per customer**.
-- **SAIFI:** sustained interruptions **per customer**.
-- **CAIDI:** minutes **per customer-interruption**.
-- **MW:** demand at a point in time. **MWh/TWh:** electricity consumed over a period.
+Blanks are ".", numbers carry thousands separators. Three header rows.
 
-A customer-interruption is **not** the same as one distinct incident on the grid: one incident can interrupt many customers.
+### `RAW.PUDL_RELIABILITY` (24,358 rows, utility-state-year-standard, 2013 to 2024)
+PUDL's cleaned long form of the same sheet across years. `standard` is `ieee_standard` or `other_standard`; both rows exist even when one is empty. `saidi_w_med` = with major event days (all events), `saidi_wo_med` = without. `data_maturity` is PUDL's flag (`final`, `provisional`).
 
-For actual column definitions and SQL expressions, see [`sql/01_raw_staging.sql`](../sql/01_raw_staging.sql), [`sql/02_mart.sql`](../sql/02_mart.sql), [`sql/05_noaa_storms.sql`](../sql/05_noaa_storms.sql) and [`sql/06_eia930_demand.sql`](../sql/06_eia930_demand.sql).
+### `RAW.PUDL_AMI` (127,720 rows, utility-state-year-customer class)
+Meter counts: `advanced_metering_infrastructure` (smart meters), `automated_meter_reading` (one-way AMR), `non_amr_ami` (standard meters), `energy_served_ami_mwh`, `direct_load_control_customers`, `daily_digital_access_customers`, `home_area_network`.
+
+### `RAW.PUDL_SALES` (198,770 rows, utility-state-year-class-service type)
+`sales_mwh`, `customers`, `sales_revenue` by `customer_class` (residential, commercial, industrial, transportation, total) and `service_type` (bundled, delivery, energy).
+
+### `RAW.NOAA_STORM_EVENTS` (831,288 rows, one per event, 2013 to 2025)
+51 columns as published. Used: `state`, `year`, `event_type`, `cz_type` (`C` county, `Z` forecast zone), `cz_fips`, `cz_name`, `begin_yearmonth`, `begin_day`, `magnitude` (wind in knots for Thunderstorm Wind), `episode_id`, `event_id`.
+
+### `RAW.NOAA_ZONE_COUNTY` (7,087 rows, zone-county)
+NWS lookup: `state`, `zone`, `county_name`, `fips`. A forecast zone can span several counties.
+
+### `RAW.EIA861_SERVICE_TERRITORY_2025` (11,803 rows, utility-state-county)
+Which counties each utility serves. `utility_number`, `state`, `county`.
+
+### `RAW.EIA930_SUBREGION` (6,077,232 rows, BA-subregion-hour, July 2018 to October 2026)
+`balancing_authority`, `sub_region`, `data_date`, `hour_number` (1 to 24, hour ending), `demand_mw`, `local_time_end`, `utc_time_end`.
+
+## STG
+
+| View | Grain | What it does |
+|---|---|---|
+| `STG.RELIABILITY_2025` | utility-state-year (2025) | Unpivots the IEEE and Other blocks into one shape with a `standard` column. Types every metric as `NUMBER(12,3)`. |
+| `STG.RELIABILITY_HIST` | utility-state-year (2013 to 2024) | Types PUDL, maps `ieee_standard` -> `IEEE 1366`, `other_standard` -> `Other`. Drops rows with no SAIDI at all. |
+| `STG.RELIABILITY` | utility-state-year | Union of the two. Seven small utilities filed both standards in 2021: keep the IEEE row (`QUALIFY ROW_NUMBER() ... = 1`) so customers are not double counted. |
+| `STG.AMI` | utility-state-year | Sums meter counts across classes, computes `ami_share`. |
+| `STG.SALES` | utility-state-year-class-service type | Typed sales, customers, revenue. |
+| `STG.DOMINION_VA_COUNTIES` | county | The 104 Virginia counties and cities Dominion serves, as 5-digit FIPS. EIA writes "Alexandria City", NOAA writes "City of Alexandria", both spellings are tried. |
+| `STG.NOAA_VA_EVENTS` | event x county | Virginia events with a county FIPS: county events directly, zone events through the zone lookup, then a second pass on county name for zones renumbered since the lookup was built. Adds `line_risk` (wind, winter, tropical, other). |
+| `STG.EIA930_DOM_HOURLY` | hour (72,864) | PJM / DOM only. `utc_ts` for the hour, `demand_mw_reported` as filed, `demand_mw` with values above 60,000 set to NULL. |
+
+Common typed columns in `STG.RELIABILITY`:
+
+| Column | Type | Unit | Meaning |
+|---|---|---|---|
+| `year` | NUMBER | | Data year |
+| `utility_id`, `state`, `utility_name`, `entity_type` | | | Identity |
+| `standard` | VARCHAR | | `IEEE 1366` or `Other` |
+| `saidi_all`, `saidi_ex_med` | NUMBER(12,3) | minutes per customer per year | System Average Interruption Duration Index, all events / excluding major event days |
+| `saifi_all`, `saifi_ex_med` | NUMBER(12,3) | interruptions per customer per year | System Average Interruption Frequency Index |
+| `caidi_all`, `caidi_ex_med` | NUMBER(12,3) | minutes per interruption | Customer Average Interruption Duration Index = SAIDI / SAIFI |
+| `saidi_all_minus_los` | NUMBER(12,3) | minutes | All events less loss-of-supply, IEEE filers only |
+| `customers` | NUMBER | count | Customers served, the denominator of every ratio |
+| `max_kv` | NUMBER(6,1) | kV | Highest distribution voltage included |
+| `auto_recorded` | BOOLEAN | | Outages recorded automatically |
+| `momentary_def` | VARCHAR | | Utility's definition of momentary (Other filers) |
+| `inactive_included` | BOOLEAN | | Inactive accounts counted in customers |
+| `source` | VARCHAR | | `EIA-861 final 2025` or `PUDL (EIA-861) 2013-2024` |
+
+## MART
+
+### `MART.DIM_UTILITY` (one row per utility_key)
+`utility_id`, `state`, `utility_key`, `utility_name` (latest filed), `entity_type`, `peer_group`. Peer groups are assigned by ID rather than by name and are listed in `docs/04_decisions.md` D10:
+
+| peer_group | Members |
+|---|---|
+| Dominion Energy Virginia | 19876-VA |
+| Virginia co-op | every Virginia utility with entity type Cooperative |
+| Appalachian Power (VA) | 733-VA, kept separate because its mountain terrain makes it an outlier |
+| Southeast IOU peer | Duke Carolinas 5416-NC, Duke Progress 3046-NC, Georgia Power 7140-GA, Alabama Power 195-AL, Dominion SC 17539-SC |
+| Mid-Atlantic IOU peer | BGE 1167-MD, Pepco 15270-MD, PECO 14940-PA, PPL 14715-PA |
+| Florida IOU peer | FPL 6452-FL, Duke Energy Florida 6455-FL |
+| Other | all remaining reporting units (about 950) |
+
+### `MART.FCT_RELIABILITY` (13,095 rows, utility_key x year, 2013 to 2025)
+All columns of `STG.RELIABILITY` plus the additive numerators used for aggregation:
+
+| Column | Formula | Purpose |
+|---|---|---|
+| `storm_saidi`, `storm_saifi` | all - ex_med | Minutes and interruptions attributable to major event days |
+| `cust_minutes_all`, `cust_minutes_ex_med` | SAIDI x customers | Total customer-minutes. Summed across utilities or years and divided by summed customers. |
+| `cust_interruptions_all`, `cust_interruptions_ex_med` | SAIFI x customers | Total customer-interruptions, aggregated the same way |
+
+### `MART.V_TREND` (view, utility_key x year)
+Adds prior-year values (`*_py`), `saidi_yoy`, `storm_share`, five-year rolling averages and `frequency_share_of_change` = ln(SAIFI ratio) / ln(SAIDI ratio), the share of a SAIDI change attributable to frequency. Arguments to `LN` are guarded with `NULLIF` because Snowflake raises an error on `LN(0)` and some utilities report zero.
+
+### `MART.V_GROUP_INDEX` (view, peer_group x year)
+Customer-weighted SAIFI, SAIDI, CAIDI for each peer group: `SUM(cust_interruptions_ex_med) / SUM(customers of utilities that reported it)`. Used for the co-op benchmark. See `docs/03` P18 on the denominator.
+
+### `MART.V_VA_COOP_PANEL` (view, created in `03_analysis.sql`)
+Balanced panel of Virginia co-ops with at least 10,000 customers that filed in every year 2015 to 2025 (seven utilities). Used in Q3 as a robustness check. The report uses the all-co-op group from `V_GROUP_INDEX`.
+
+### `MART.STORM_INDEX` (13 rows, year)
+| Column | Meaning |
+|---|---|
+| `storm_county_days` | Count of (county, date) pairs in Dominion's Virginia counties with at least one wind, winter or tropical event. Multiple reports in one county on one day count once. |
+| `wind_days`, `winter_days`, `tropical_days` | Same, by event family |
+| `severe_gust_days` | County-days with a Thunderstorm Wind gust of 60 knots or more |
+
+### `MART.V_STORM_VS_SAIDI` (view, year)
+`STORM_INDEX` joined to Dominion's rows in `FCT_RELIABILITY`: adds `saidi_ex_med`, `saifi_ex_med`, `storm_saidi`. Source for the scatter chart and the weather fit.
+
+### `MART.SAIDI_WEATHER_ADJUSTED` (11 rows, year 2015 to 2025)
+| Column | Meaning |
+|---|---|
+| `predicted_from_weather` | intercept + slope x storm_county_days, fitted on 2015 to 2024 (intercept 104.4, slope 0.0514 minutes per county-day) |
+| `weather_adjusted_saidi` | actual - predicted + mean(2015 to 2024). The year's SAIDI at average weather exposure |
+
+### `MART.DOM_LOAD_ANNUAL` (9 rows, year 2018 to 2026)
+`winter_peak_mw` (Dec, Jan, Feb of the calendar year), `summer_peak_mw` (Jun to Aug), `peak_mw`, `floor_mw` (lowest hour), `median_mw`, `avg_mw`, `energy_twh`, `hours_reported`, `hours_missing`. 2018 is July onward and 2026 is year to date.
+
+### `MART.DOM_TOP50_HOURS` (96 rows)
+The fifty highest-demand hours ranked at two reference dates: `rank_end_2025` (record to 31 December 2025, comparable with the annual report) and `rank_today`. A row is included if it is in either top fifty.
+
+### `MART.DOM_LOAD_PROFILE` (24 rows, hour of day)
+`avg_mw_2019`, `avg_mw_2025`, `growth_pct` for each hour ending 1 to 24.
+
+## Naming conventions
+
+- Tables and views upper case, columns lower case snake case, as Snowflake displays them.
+- `V_` prefix for views in MART, none in STG (everything in STG is a view).
+- `_ex_med` = excluding major event days, `_all` = all events. `adjusted` refers only to the weather fit.
+- `customers` is a count of customers. `saidi_*` is minutes per customer.

@@ -19,9 +19,13 @@ CAIDI ex MED = DIVIDE([SAIDI ex MED], [SAIFI ex MED])
 
 SAIDI all events = DIVIDE(SUM(FCT_RELIABILITY[CUST_MINUTES_ALL]), [Total Customers])
 
-Storm SAIDI = [SAIDI all events] - [SAIDI ex MED]
+// EIA reporting difference: not independently established as NOAA storm damage.
+Major-event-day SAIDI = [SAIDI all events] - [SAIDI ex MED]
+Major-event-day share = DIVIDE([Major-event-day SAIDI], [SAIDI all events])
 
-Storm share = DIVIDE([Storm SAIDI], [SAIDI all events])
+// Legacy names retained so existing Power BI visuals do not break.
+Storm SAIDI = [Major-event-day SAIDI]
+Storm share = [Major-event-day share]
 
 // Three-year averages: the customer-weighted SAIDI for each year, then the mean of
 // the years. Matches Dominion's definition. Annual report: 133.0 and 130.2.
@@ -172,11 +176,21 @@ Row colour = IF(SELECTEDVALUE(DIM_UTILITY[Display name]) = "Dominion Energy Virg
 // V_GROUP_INDEX: co-op benchmark
 // ---------------------------------------------------------------------
 
+// One index point requires one year and one peer group; do not sum ratios.
 SAIFI index 2015 =
-DIVIDE(
-    SUM(V_GROUP_INDEX[SAIFI_EX_MED]),
-    CALCULATE(SUM(V_GROUP_INDEX[SAIFI_EX_MED]), V_GROUP_INDEX[YEAR] = 2015)
-) * 100
+VAR CurrentValue = SELECTEDVALUE(V_GROUP_INDEX[SAIFI_EX_MED])
+VAR Base2015 =
+    CALCULATE(
+        MAX(V_GROUP_INDEX[SAIFI_EX_MED]),
+        REMOVEFILTERS(V_GROUP_INDEX[YEAR]),
+        V_GROUP_INDEX[YEAR] = 2015
+    )
+RETURN
+    IF(
+        HASONEVALUE(V_GROUP_INDEX[YEAR]) &&
+        HASONEVALUE(V_GROUP_INDEX[PEER_GROUP]),
+        DIVIDE(CurrentValue, Base2015) * 100
+    )
 
 Index label = IF(SELECTEDVALUE(V_GROUP_INDEX[YEAR]) = 2025, [SAIFI index 2015])
 
@@ -198,10 +212,11 @@ Adjusted label = IF(SELECTEDVALUE(SAIDI_WEATHER_ADJUSTED[YEAR]) IN {2015, 2019, 
 // DOM_LOAD_ANNUAL and DOM_TOP50_HOURS: EIA-930
 // ---------------------------------------------------------------------
 
-Floor MW = SUM(DOM_LOAD_ANNUAL[FLOOR_MW])
-Peak MW = SUM(DOM_LOAD_ANNUAL[PEAK_MW])
-Winter peak MW = SUM(DOM_LOAD_ANNUAL[WINTER_PEAK_MW])
-Summer peak MW = SUM(DOM_LOAD_ANNUAL[SUMMER_PEAK_MW])
+// These are annual extrema, not additive totals.
+Floor MW = MIN(DOM_LOAD_ANNUAL[FLOOR_MW])
+Peak MW = MAX(DOM_LOAD_ANNUAL[PEAK_MW])
+Winter peak MW = MAX(DOM_LOAD_ANNUAL[WINTER_PEAK_MW])
+Summer peak MW = MAX(DOM_LOAD_ANNUAL[SUMMER_PEAK_MW])
 
 Floor growth 2019 to 2025 =
 DIVIDE(CALCULATE([Floor MW], DOM_LOAD_ANNUAL[YEAR] = 2025),
@@ -232,6 +247,10 @@ SWITCH(TRUE(),
 // Workbook tables (Programmes2025, LoadGrowth): no-Snowflake route
 // ---------------------------------------------------------------------
 
-Smart meter share % = SUM(Programmes2025[smart_meter_share]) * 100
-Time-varying rate % = SUM(Programmes2025[time_varying_rate_share_pct])
+// A share cannot be summed across utilities. Return blank for mixed selections.
+Smart meter share % = SELECTEDVALUE(Programmes2025[smart_meter_share]) * 100
+Time-varying rate % = SELECTEDVALUE(Programmes2025[time_varying_rate_share_pct])
 Sales label = IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, SUM(LoadGrowth[commercial_sales_index]))
+
+// The named period measures are intentionally fixed to the 2025 review period.
+// Revalidate their year filters before refreshing the report with a newer EIA release.
