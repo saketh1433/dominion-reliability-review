@@ -14,7 +14,7 @@ I wanted to look beyond the headline: **Were customers losing power more often, 
 
 ![Change in Dominion reliability measures, 2023 to 2025](figures/reliability-change.svg)
 
-*Chart recreated from the reported EIA-861 values; this is not a screenshot of Power BI.*
+*Chart recreated from the reported EIA-861 values*
 
 From 2023 to 2025, Dominion Virginia's reported reliability measures (excluding major event days) changed as follows:
 
