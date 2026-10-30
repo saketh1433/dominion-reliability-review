@@ -1,0 +1,38 @@
+name: Check reliability calculations
+
+on:
+  push:
+    paths:
+      - "scripts/**"
+      - "sql/**"
+      - "data/input/**"
+      - "data/output/**"
+      - "requirements.txt"
+      - ".github/workflows/reliability-checks.yml"
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "sql/**"
+      - "data/input/**"
+      - "data/output/**"
+      - "requirements.txt"
+      - ".github/workflows/reliability-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  reliability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install DuckDB and Pandas
+        run: python -m pip install -r requirements.txt
+      - name: Rebuild EIA reliability mart and run T1-T6
+        run: python -I scripts/run_local_duckdb.py
+      - name: Check committed weather and demand summaries
+        run: python -I scripts/check_output_metrics.py

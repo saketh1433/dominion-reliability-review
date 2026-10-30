@@ -114,3 +114,7 @@ Formatting measures (`Bar colour`, `Dot colour`, `Row colour`, `SAIFI label`, `C
 ## Weather-model interpretation
 
 The regression was fitted on only ten annual observations (2015-2024); the correlation shows association, not causation. The unusually small 2025 prediction error should not be presented as evidence of consistent forecasting accuracy. Annual NOAA storm county-days and ex-MED SAIDI also differ in which event days they cover. Weather-adjusted SAIDI is a model-based comparison, not an audited reliability measure.
+
+## Interpreting year-to-year attribution
+
+When annual SAIDI barely changes, dividing the logarithmic SAIFI change by the tiny logarithmic SAIDI change gives an unstable percentage. In `V_TREND`, the frequency-share calculation is now left blank when the absolute logarithmic SAIDI change is below 0.02 (approximately a 2% annual change). The longer 2023-to-2025 comparison remains available and is interpretable. Suppressing a ratio is not suppressing the actual SAIDI/SAIFI/CAIDI values.

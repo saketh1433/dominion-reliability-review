@@ -29,6 +29,8 @@ SELECT
   customers,
   saidi_all, saifi_all, caidi_all,
   saidi_ex_med, saifi_ex_med, caidi_ex_med,
+  -- Legacy column names: these are *major-event-day exclusion differences*
+  -- in the EIA filing, not measured NOAA storm-caused outage minutes.
   saidi_all - saidi_ex_med                       AS storm_saidi,
   saifi_all - saifi_ex_med                       AS storm_saifi,
   saidi_all * customers                          AS cust_minutes_all,
@@ -51,8 +53,14 @@ SELECT
   -- share of the SAIDI change that came from frequency: ln SAIDI = ln SAIFI + ln CAIDI.
   -- NULLIF(x, 0) feeds LN a NULL instead of a zero: Snowflake raises on LN(0),
   -- some utilities report 0, and LN(NULL) returns NULL.
-  LN(NULLIF(f.saifi_ex_med, 0) / NULLIF(saifi_ex_med_py, 0))
-    / NULLIF(LN(NULLIF(f.saidi_ex_med, 0) / NULLIF(saidi_ex_med_py, 0)), 0)      AS frequency_share_of_change,
+  -- When SAIDI changes by under about 2%, the denominator is near zero
+  -- and the attributed frequency share becomes misleadingly extreme.
+  CASE
+    WHEN ABS(LN(NULLIF(f.saidi_ex_med, 0) / NULLIF(saidi_ex_med_py, 0))) < 0.02
+      THEN NULL
+    ELSE LN(NULLIF(f.saifi_ex_med, 0) / NULLIF(saifi_ex_med_py, 0))
+      / NULLIF(LN(NULLIF(f.saidi_ex_med, 0) / NULLIF(saidi_ex_med_py, 0)), 0)
+  END AS frequency_share_of_change,
   AVG(f.saidi_ex_med) OVER (PARTITION BY f.utility_key ORDER BY f.year
                             ROWS BETWEEN 4 PRECEDING AND CURRENT ROW)             AS saidi_ex_med_5yr,
   AVG(f.saifi_ex_med) OVER (PARTITION BY f.utility_key ORDER BY f.year
