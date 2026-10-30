@@ -1,6 +1,6 @@
 # Names used in this project
 
-These are just conventions to keep files and columns consistent. You don't need to memorize them to read the findings.
+These are just conventions to keep files and columns consistent.
 
 ## Folders
 
