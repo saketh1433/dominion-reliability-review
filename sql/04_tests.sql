@@ -21,10 +21,19 @@ SELECT utility_key, year, saidi_all, saidi_ex_med
 FROM RELIABILITY.MART.FCT_RELIABILITY
 WHERE saidi_all < saidi_ex_med - 0.01;
 
--- T4. Dominion VA 2025 matches EIA's published values
-SELECT * FROM RELIABILITY.MART.FCT_RELIABILITY
-WHERE utility_key = '19876|VA' AND year = 2025
-  AND NOT (saidi_all = 306.7 AND saidi_ex_med = 144.4 AND customers = 2675735);
+-- T4. Dominion VA 2025 exists exactly once and matches EIA's published values.
+-- A LEFT JOIN also flags a missing row; the former WHERE clause did not.
+WITH expected AS (
+  SELECT '19876|VA' AS utility_key, 2025 AS year
+)
+SELECT e.utility_key, e.year, f.saidi_all, f.saidi_ex_med, f.customers
+FROM expected e
+LEFT JOIN RELIABILITY.MART.FCT_RELIABILITY f
+  ON f.utility_key = e.utility_key AND f.year = e.year
+WHERE f.utility_key IS NULL
+   OR f.saidi_all IS DISTINCT FROM 306.7
+   OR f.saidi_ex_med IS DISTINCT FROM 144.4
+   OR f.customers IS DISTINCT FROM 2675735;
 
 -- T5. Row counts and customer totals by year
 SELECT year, COUNT(*) AS utilities, SUM(customers) AS customers
