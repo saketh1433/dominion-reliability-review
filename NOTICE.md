@@ -1,6 +1,6 @@
 # Sources and attribution
 
-This project combines publicly available datasets and original analysis. The data was not collected from Dominion internal systems.
+This project combines publicly available datasets and original analysis.
 
 - **U.S. Energy Information Administration (EIA):** EIA-861 annual utility reporting and EIA-930 hourly demand. https://www.eia.gov/electricity/data/eia861/ and https://www.eia.gov/electricity/gridmonitor/
 - **Catalyst Cooperative PUDL:** historical EIA-861 reliability, smart metering, and electricity-sales extracts, used under the stated **Creative Commons Attribution 4.0 (CC BY 4.0)** terms. https://docs.catalyst.coop/pudl/en/stable/data_access.html . Data is excerpted/standardized for this project; the analyses, joins and charts are project work.
