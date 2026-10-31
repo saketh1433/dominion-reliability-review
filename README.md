@@ -101,5 +101,3 @@ For data attribution, see [NOTICE.md](NOTICE.md) and [source notes](docs/01_sour
 - [Power BI measures](powerbi/measures.dax)
 
 To reproduce the **core reliability** calculations without Snowflake, run `python scripts/run_local_duckdb.py`. The NOAA and hourly-demand analyses use the additional input files and SQL documented in `scripts/` and `sql/`. The Power BI report file itself is not included in the repository.
-
-*Independent review using public information only; no Dominion internal operational data.*
