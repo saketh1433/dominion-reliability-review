@@ -1,8 +1,5 @@
 -- =====================================================================
 -- DOMINION RELIABILITY MART  |  01: raw tables and staging views
--- Snowflake SQL. The same files run on DuckDB through scripts/run_local_duckdb.py
--- for the syntax common to both. Snowflake-only pieces (stages, file
--- formats, COPY INTO) are marked.
 -- =====================================================================
 
 -- ---------- 0. Setup (Snowflake only) ----------
