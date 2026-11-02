@@ -1,4 +1,4 @@
-# Dominion Energy Virginia | Reliability review
+# Dominion Energy Virginia: Reliability review
 
 **A public-data look at customer outages, severe weather and changing electricity demand.**
 
