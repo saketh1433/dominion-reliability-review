@@ -1,256 +1,457 @@
 // =====================================================================
-// Dominion reliability report: DAX measures and calculated columns, by table.
-// Columns keep Snowflake names; measures use metric names; plain-language
-// names are used in visual titles.
-// Aggregation: sum numerators, sum denominators, divide once.
+// Dominion reliability review: DAX measures and calculated columns, by table.
+// Matches the model in Dominion_reliability_review.pbit. Each measure has its purpose above it
+// (the same text is the measure's Description, shown when you hover over it in the Data pane).
+// Aggregation rule: sum numerators, sum denominators, divide once; ratios and extremes are never summed.
 // =====================================================================
 
 // ---------------------------------------------------------------------
-// FCT_RELIABILITY: core reliability measures
+// FCT_RELIABILITY
 // ---------------------------------------------------------------------
 
-Total Customers = SUM(FCT_RELIABILITY[CUSTOMERS])
+// Customers served in the rows in context. Denominator of every index.
+Total Customers = SUM(FCT_RELIABILITY[Customers Served])
 
+// Outage minutes per customer excluding major event days, customer-weighted: summed customer-minutes over summed customers.
+// Format: 0.0
 SAIDI ex MED = DIVIDE(SUM(FCT_RELIABILITY[CUST_MINUTES_EX_MED]), [Total Customers])
 
+// Sustained interruptions per customer excluding major event days, customer-weighted.
+// Format: 0.000
 SAIFI ex MED = DIVIDE(SUM(FCT_RELIABILITY[CUST_INTERRUPTIONS_EX_MED]), [Total Customers])
 
+// Minutes per interruption excluding major event days: a ratio of the two indices (SAIDI / SAIFI), not a restoration time. SAIDI = SAIFI x CAIDI.
+// Format: 0.0
 CAIDI ex MED = DIVIDE([SAIDI ex MED], [SAIFI ex MED])
 
+// Outage minutes per customer including major event days.
+// Format: 0.0
 SAIDI all events = DIVIDE(SUM(FCT_RELIABILITY[CUST_MINUTES_ALL]), [Total Customers])
 
-// EIA reporting difference: not independently established as NOAA storm damage.
+// Minutes per customer on major event days: the EIA reporting difference, not a measure of NOAA storm damage.
+// Format: 0.0
 Major-event-day SAIDI = [SAIDI all events] - [SAIDI ex MED]
+
+// Share of all-event outage minutes that fell on major event days, customer-weighted (replaces the old sum of row ratios).
+// Format: 0%
 Major-event-day share = DIVIDE([Major-event-day SAIDI], [SAIDI all events])
 
-// Legacy names retained so existing Power BI visuals do not break.
+// Legacy alias of Major-event-day SAIDI, kept so older visuals do not break. (hidden)
+// Format: 0.0
 Storm SAIDI = [Major-event-day SAIDI]
+
+// Legacy alias of Major-event-day share, kept so older visuals do not break. (hidden)
+// Format: 0%
 Storm share = [Major-event-day share]
 
-// Three-year averages: the customer-weighted SAIDI for each year, then the mean of
-// the years. Matches Dominion's definition. Annual report: 133.0 and 130.2.
-SAIDI 3yr ending 2025 =
-CALCULATE(
-    AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]),
-    FCT_RELIABILITY[YEAR] IN {2023, 2024, 2025}
-)
+// Mean of the 2023-2025 annual SAIDI ex MED values (Dominion's 3-year definition). Annual report: 133.
+// Format: 0.0
+SAIDI 3yr ending 2025 = CALCULATE(AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]), FCT_RELIABILITY[YEAR] IN {2023, 2024, 2025})
 
-SAIDI 3yr ending 2024 =
-CALCULATE(
-    AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]),
-    FCT_RELIABILITY[YEAR] IN {2022, 2023, 2024}
-)
+// Mean of the 2022-2024 annual SAIDI ex MED values. Annual report: 130.
+// Format: 0.0
+SAIDI 3yr ending 2024 = CALCULATE(AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]), FCT_RELIABILITY[YEAR] IN {2022, 2023, 2024})
 
-// Peer-page period averages
-SAIDI 2015 to 2017 =
-CALCULATE(
-    AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]),
-    FCT_RELIABILITY[YEAR] IN {2015, 2016, 2017}
-)
+// Peer table: mean annual SAIDI ex MED 2015-2017.
+// Format: 0.0
+SAIDI 2015 to 2017 = CALCULATE(AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]), FCT_RELIABILITY[YEAR] IN {2015, 2016, 2017})
 
-SAIDI 2023 to 2025 =
-CALCULATE(
-    AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]),
-    FCT_RELIABILITY[YEAR] IN {2023, 2024, 2025}
-)
+// Peer bars and table: mean annual SAIDI ex MED 2023-2025.
+// Format: 0.0
+SAIDI 2023 to 2025 = CALCULATE(AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIDI ex MED]), FCT_RELIABILITY[YEAR] IN {2023, 2024, 2025})
 
+// Change in mean SAIDI ex MED from 2015-2017 to 2023-2025.
+// Format: 0.0%
 SAIDI change % = DIVIDE([SAIDI 2023 to 2025], [SAIDI 2015 to 2017]) - 1
 
-SAIFI 5yr =
-CALCULATE(
-    AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIFI ex MED]),
-    FCT_RELIABILITY[YEAR] IN {2021, 2022, 2023, 2024, 2025}
-)
+// Mean annual SAIFI ex MED 2021-2025 (peer scatter x-axis).
+// Format: 0.000
+SAIFI 5yr = CALCULATE(AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [SAIFI ex MED]), FCT_RELIABILITY[YEAR] IN {2021, 2022, 2023, 2024, 2025})
 
-CAIDI 5yr =
-CALCULATE(
-    AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [CAIDI ex MED]),
-    FCT_RELIABILITY[YEAR] IN {2021, 2022, 2023, 2024, 2025}
-)
+// Mean annual CAIDI ex MED 2021-2025 (peer scatter y-axis).
+// Format: 0.0
+CAIDI 5yr = CALCULATE(AVERAGEX(VALUES(FCT_RELIABILITY[YEAR]), [CAIDI ex MED]), FCT_RELIABILITY[YEAR] IN {2021, 2022, 2023, 2024, 2025})
 
-// Quadrant scatter: blank outside the top-right quadrant (above the 12-peer medians)
-SAIFI 5yr quadrant = IF([SAIFI 5yr] > 0.96 && [CAIDI 5yr] > 105, [SAIFI 5yr])
-CAIDI 5yr quadrant = IF([SAIFI 5yr] > 0.96 && [CAIDI 5yr] > 105, [CAIDI 5yr])
+// SAIFI 5yr shown only above both medians of the 11 peers, Dominion excluded (top-right quadrant).
+// Format: 0.000
+SAIFI 5yr quadrant = IF([SAIFI 5yr] > 0.934 && [CAIDI 5yr] > 99.5, [SAIFI 5yr])
 
-// Decomposition: ln SAIDI = ln SAIFI + ln CAIDI, so the share of a change from frequency
-// is ln(SAIFI ratio) / ln(SAIDI ratio).
-SAIDI change 2019 to 2023 =
-DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023),
-       CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2019)) - 1
+// CAIDI 5yr shown only above both medians of the 11 peers, Dominion excluded (top-right quadrant).
+// Format: 0.0
+CAIDI 5yr quadrant = IF([SAIFI 5yr] > 0.934 && [CAIDI 5yr] > 99.5, [CAIDI 5yr])
 
-Frequency share 2019 to 2023 =
-DIVIDE(
-    LN(DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2023), CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2019))),
-    LN(DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2019)))
-)
+// SAIDI ex MED change 2019 to 2023.
+// Format: 0.0%
+SAIDI change 2019 to 2023 = DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2019)) - 1
 
-SAIDI change 2023 to 2025 =
-DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025),
-       CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023)) - 1
+// Share of the 2019-2023 SAIDI change from frequency: ln(SAIFI ratio) / ln(SAIDI ratio).
+// Format: 0%
+Frequency share 2019 to 2023 = DIVIDE(LN(DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2023), CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2019))), LN(DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2019))))
 
-Frequency share 2023 to 2025 =
-DIVIDE(
-    LN(DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2023))),
-    LN(DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023)))
-)
+// SAIDI ex MED change 2023 to 2025.
+// Format: 0.0%
+SAIDI change 2023 to 2025 = DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023)) - 1
 
-CAIDI change 2019 to 2025 =
-DIVIDE(CALCULATE([CAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025),
-       CALCULATE([CAIDI ex MED], FCT_RELIABILITY[YEAR] = 2019)) - 1
+// Share of the 2023-2025 SAIDI change from frequency.
+// Format: 0%
+Frequency share 2023 to 2025 = DIVIDE(LN(DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2023))), LN(DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2023))))
 
-SAIFI change 2019 to 2025 =
-DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2025),
-       CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2019)) - 1
+// SAIDI ex MED change 2022 to 2025: the year the 3-year window dropped and the year it added.
+// Format: 0.0%
+SAIDI change 2022 to 2025 = DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2022)) - 1
 
-// Reporting method shown in the peer table
+// Share of the 2022-2025 SAIDI change from frequency (above 100% because CAIDI fell).
+// Format: 0%
+Frequency share 2022 to 2025 = DIVIDE(LN(DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2022))), LN(DIVIDE(CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = 2022))))
+
+// SAIFI ex MED change 2019 to 2025 (title: up 6%).
+// Format: 0.0%
+SAIFI change 2019 to 2025 = DIVIDE(CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = 2019)) - 1
+
+// CAIDI ex MED change 2019 to 2025 (title: down 9%).
+// Format: 0.0%
+CAIDI change 2019 to 2025 = DIVIDE(CALCULATE([CAIDI ex MED], FCT_RELIABILITY[YEAR] = 2025), CALCULATE([CAIDI ex MED], FCT_RELIABILITY[YEAR] = 2019)) - 1
+
+// How the utility excluded major events in 2014-2025, the years compared: IEEE 1366, or its own rule (EIA's "Other"). Ten of the twelve filed IEEE 1366 every year; Dominion and Alabama Power filed "Other". Georgia Power and Duke Energy Florida filed "Other" in 2013 only.
 Method =
-VAR s = IF(DISTINCTCOUNT(FCT_RELIABILITY[STANDARD]) > 1, "Changed", MAX(FCT_RELIABILITY[STANDARD]))
+VAR s = CALCULATE(IF(DISTINCTCOUNT(FCT_RELIABILITY[STANDARD]) > 1, "Changed", MAX(FCT_RELIABILITY[STANDARD])), FCT_RELIABILITY[YEAR] >= 2014)
 RETURN IF(s = "Other", "Own rule", s)
 
-// Point labels: value shown only for selected years
+// Point label: SAIFI shown only for 2019, 2023 and 2025.
+// Format: 0.00
 SAIFI label = IF(SELECTEDVALUE(FCT_RELIABILITY[YEAR]) IN {2019, 2023, 2025}, [SAIFI ex MED])
+
+// Point label: CAIDI shown only for 2019, 2023 and 2025.
+// Format: 0.0
 CAIDI label = IF(SELECTEDVALUE(FCT_RELIABILITY[YEAR]) IN {2019, 2023, 2025}, [CAIDI ex MED])
 
-// Colour: an increase in outage minutes is shown in red
+// Font color for the change column: increase red, decrease green.
 Change colour = IF([SAIDI change %] > 0, "#B23B3B", IF([SAIDI change %] < 0, "#2E7D32", "#333333"))
 
 // ---------------------------------------------------------------------
-// DIM_UTILITY: calculated columns and colour helpers
+// DIM_UTILITY
 // ---------------------------------------------------------------------
 
-// Calculated column. Display names are assigned by EIA ID.
+// Calculated column
 Display name =
-SWITCH(DIM_UTILITY[UTILITY_KEY],
-    "19876|VA", "Dominion Energy Virginia",
-    "17539|SC", "Dominion Energy SC",
-    "5416|NC",  "Duke Carolinas (NC)",
-    "3046|NC",  "Duke Progress (NC)",
-    "6455|FL",  "Duke Energy Florida",
-    "7140|GA",  "Georgia Power",
-    "195|AL",   "Alabama Power",
-    "14715|PA", "PPL Electric",
-    "14940|PA", "PECO",
-    "1167|MD",  "BGE",
-    "15270|MD", "Pepco (MD)",
-    "6452|FL",  "FPL",
-    "733|VA",   "Appalachian Power (VA)",
-    DIM_UTILITY[UTILITY_NAME])
+SWITCH(DIM_UTILITY[UTILITY_KEY], "19876|VA", "Dominion Energy Virginia", "17539|SC", "Dominion Energy SC", "5416|NC", "Duke Carolinas (NC)", "3046|NC", "Duke Progress (NC)", "7140|GA", "Georgia Power", "195|AL", "Alabama Power", "6455|FL", "Duke Energy Florida", "6452|FL", "FPL", "1167|MD", "BGE", "15270|MD", "Pepco (MD)", "14940|PA", "PECO", "14715|PA", "PPL Electric", "733|VA", "Appalachian Power (VA)", DIM_UTILITY[UTILITY_NAME])
 
 // Calculated column
 Short name =
 SWITCH(DIM_UTILITY[Display name],
     "Dominion Energy Virginia", "Dominion VA",
-    "Dominion Energy SC",       "Dominion SC",
-    "Duke Carolinas (NC)",      "Duke C",
-    "Duke Progress (NC)",       "Duke P",
-    "Duke Energy Florida",      "Duke FL",
-    "Georgia Power",            "Georgia",
-    "Alabama Power",            "Alabama",
-    "PPL Electric",             "PPL",
-    "Pepco (MD)",               "Pepco",
+    "Dominion Energy SC", "Dominion SC",
+    "Duke Carolinas (NC)", "Duke Carolinas",
+    "Duke Progress (NC)", "Duke Progress",
+    "Duke Energy Florida", "Duke FL",
+    "Georgia Power", "Georgia",
+    "Alabama Power", "Alabama",
+    "PPL Electric", "PPL",
+    "Pepco (MD)", "Pepco",
     DIM_UTILITY[Display name])
 
-// Calculated column: labels for the quadrant containing Dominion
+// Calculated column
 Quadrant name =
 SWITCH(DIM_UTILITY[Display name],
     "Dominion Energy Virginia", "Dominion VA",
-    "Duke Progress (NC)",       "Duke P",
-    "Georgia Power",            "Georgia",
-    "Duke Carolinas (NC)",      "Duke C",
-    BLANK())
+    "Duke Progress (NC)", "Duke Progress",
+    "Georgia Power", "Georgia",
+    "Duke Carolinas (NC)", "Duke Carolinas",
+    "")
 
 // Calculated column
 Region =
-SWITCH(DIM_UTILITY[PEER_GROUP],
-    "Southeast IOU peer",       "Southeast",
-    "Mid-Atlantic IOU peer",    "Mid-Atlantic",
-    "Florida IOU peer",         "Florida",
-    "Dominion Energy Virginia", "Virginia",
-    DIM_UTILITY[PEER_GROUP])
+SWITCH(DIM_UTILITY[PEER_GROUP], "Southeast IOU peer", "Southeast", "Mid-Atlantic IOU peer", "Mid-Atlantic", "Florida IOU peer", "Florida", "Dominion Energy Virginia", "Virginia", DIM_UTILITY[PEER_GROUP])
 
-// Colour measures: #0A66C2 for Dominion, #B8BCC2 for other utilities
+// Bar color: Dominion in the subject blue, peers in gray.
 Bar colour = IF(SELECTEDVALUE(DIM_UTILITY[Display name]) = "Dominion Energy Virginia", "#0A66C2", "#B8BCC2")
+
+// Table row background: Dominion's row lightly tinted.
 Row colour = IF(SELECTEDVALUE(DIM_UTILITY[Display name]) = "Dominion Energy Virginia", "#E8F0FB", "#FFFFFF")
 
 // ---------------------------------------------------------------------
-// V_GROUP_INDEX: co-op benchmark
+// V_GROUP_INDEX
 // ---------------------------------------------------------------------
 
-// One index point requires one year and one peer group; do not sum ratios.
+// SAIFI ex MED indexed to 2015 = 100, for one year and one group; blank otherwise (never sums ratios).
+// Format: 0
 SAIFI index 2015 =
 VAR CurrentValue = SELECTEDVALUE(V_GROUP_INDEX[SAIFI_EX_MED])
-VAR Base2015 =
-    CALCULATE(
-        MAX(V_GROUP_INDEX[SAIFI_EX_MED]),
-        REMOVEFILTERS(V_GROUP_INDEX[YEAR]),
-        V_GROUP_INDEX[YEAR] = 2015
-    )
-RETURN
-    IF(
-        HASONEVALUE(V_GROUP_INDEX[YEAR]) &&
-        HASONEVALUE(V_GROUP_INDEX[PEER_GROUP]),
-        DIVIDE(CurrentValue, Base2015) * 100
-    )
+VAR Base2015 = CALCULATE(MAX(V_GROUP_INDEX[SAIFI_EX_MED]), REMOVEFILTERS(V_GROUP_INDEX[YEAR]), V_GROUP_INDEX[YEAR] = 2015)
+RETURN IF(HASONEVALUE(V_GROUP_INDEX[YEAR]) && HASONEVALUE(V_GROUP_INDEX[PEER_GROUP]), DIVIDE(CurrentValue, Base2015) * 100)
 
+// Point label: index shown only for 2025.
+// Format: 0
 Index label = IF(SELECTEDVALUE(V_GROUP_INDEX[YEAR]) = 2025, [SAIFI index 2015])
 
 // ---------------------------------------------------------------------
-// V_STORM_VS_SAIDI: weather scatter
+// V_STORM_VS_SAIDI
 // ---------------------------------------------------------------------
 
+// NOAA storm county-days in Dominion's Virginia counties for one year (blank across years).
+// Format: #,0
+Storm county-days = SELECTEDVALUE(V_STORM_VS_SAIDI[STORM_COUNTY_DAYS])
+
+// SAIDI ex MED for one year, from the weather table (scatter y-axis).
+// Format: 0.0
+SAIDI ex MED (weather table) = SELECTEDVALUE(V_STORM_VS_SAIDI[SAIDI_EX_MED])
+
+// Storm county-days with a damaging-wind report (additive across years).
+// Format: #,0
+Wind days = SUM(V_STORM_VS_SAIDI[WIND_DAYS])
+
+// Storm county-days with a winter-storm report (additive across years).
+// Format: #,0
+Winter days = SUM(V_STORM_VS_SAIDI[WINTER_DAYS])
+
+// Storm county-days with a tropical report (additive across years).
+// Format: #,0
+Tropical days = SUM(V_STORM_VS_SAIDI[TROPICAL_DAYS])
+
+// Scatter dot color: 2025 in the subject blue.
 Dot colour = IF(SELECTEDVALUE(V_STORM_VS_SAIDI[YEAR]) = 2025, "#0A66C2", "#B8BCC2")
 
 // ---------------------------------------------------------------------
 // SAIDI_WEATHER_ADJUSTED
 // ---------------------------------------------------------------------
 
+// Reported SAIDI ex MED for one year.
+// Format: 0.0
+Actual SAIDI = SELECTEDVALUE(SAIDI_WEATHER_ADJUSTED[SAIDI_EX_MED])
+
+// SAIDI ex MED minus the storm-day prediction plus the 2015-2024 mean: a model estimate, not an observed value.
+// Format: 0.0
+Weather-adjusted SAIDI = SELECTEDVALUE(SAIDI_WEATHER_ADJUSTED[WEATHER_ADJUSTED_SAIDI])
+
+// 2025 SAIDI predicted from 2025 storm days by the 2015-2024 fit (2025 was not in the fit).
+// Format: 0.0
 Weather-predicted 2025 = CALCULATE(SUM(SAIDI_WEATHER_ADJUSTED[PREDICTED_FROM_WEATHER]), SAIDI_WEATHER_ADJUSTED[YEAR] = 2025)
+
+// Reported 2025 SAIDI ex MED.
+// Format: 0.0
 Actual 2025 = CALCULATE(SUM(SAIDI_WEATHER_ADJUSTED[SAIDI_EX_MED]), SAIDI_WEATHER_ADJUSTED[YEAR] = 2025)
-Adjusted label = IF(SELECTEDVALUE(SAIDI_WEATHER_ADJUSTED[YEAR]) IN {2015, 2019, 2025}, SUM(SAIDI_WEATHER_ADJUSTED[WEATHER_ADJUSTED_SAIDI]))
+
+// Point label: adjusted value shown only for 2015, 2019 and 2025.
+// Format: 0.0
+Adjusted label = IF(SELECTEDVALUE(SAIDI_WEATHER_ADJUSTED[YEAR]) IN {2015, 2019, 2025}, [Weather-adjusted SAIDI])
 
 // ---------------------------------------------------------------------
-// DOM_LOAD_ANNUAL and DOM_TOP50_HOURS: EIA-930
+// COUNTY_OUTAGE_MAP
 // ---------------------------------------------------------------------
 
-// These are annual extrema, not additive totals.
+// Outage minutes per customer a year on days that are not major event days, 2015-2024 average (EAGLE-I, all utilities in the county). Blank for the 4 counties flagged for unreliable data.
+// Format: 0
+Non-major outage minutes = CALCULATE(AVERAGE(COUNTY_OUTAGE_MAP[MINUTES_NON_MED_AVG_2015_24]), COUNTY_OUTAGE_MAP[MAP_FLAG] = "ok")
+
+// Non-major outage minutes for counties with 20,000 or more customers (the comparison rule in the county analysis).
+// Format: 0
+Non-major outage minutes, 20k+ counties = CALCULATE([Non-major outage minutes], COUNTY_OUTAGE_MAP[CUSTOMERS_BASIS] >= 20000)
+
+// Non-major outage events per 10,000 customers a year, 2015-2024 average. Blank for flagged counties.
+// Format: 0.0
+Outage events per 10k customers = CALCULATE(AVERAGE(COUNTY_OUTAGE_MAP[EVENTS_PER_10K_AVG_2015_24]), COUNTY_OUTAGE_MAP[MAP_FLAG] = "ok")
+
+// ---------------------------------------------------------------------
+// OUTAGE_EVENTS_TOP10
+// ---------------------------------------------------------------------
+
+// Calculated column
+Event =
+FORMAT(OUTAGE_EVENTS_TOP10[PEAK_DAY], "mmm d, yyyy") & " " & IF(ISBLANK(OUTAGE_EVENTS_TOP10[TROPICAL_CYCLONE]), OUTAGE_EVENTS_TOP10[STORM_TYPE], "tropical (" & UPPER(LEFT(OUTAGE_EVENTS_TOP10[TROPICAL_CYCLONE], 1)) & LOWER(MID(OUTAGE_EVENTS_TOP10[TROPICAL_CYCLONE], 2, 40)) & ")")
+
+// Highest count of customers out in any 15-minute EAGLE-I reading of the event (all utilities in the 103 counties).
+// Format: #,0
+Peak customers out = MAX(OUTAGE_EVENTS_TOP10[PEAK_CUSTOMERS_OUT])
+
+// Highest count of customers out that held for at least one hour (the ranking rule for the ten events).
+// Format: #,0
+Peak customers out (held 1 h) = MAX(OUTAGE_EVENTS_TOP10[PEAK_SUSTAINED_1H])
+
+// Hours from the peak until customers out stayed at or below the pre-event level plus 10% of the peak's excess over it (a net count, all utilities). Not a utility's '% of affected customers restored'.
+// Format: 0.0
+Hours to clear 90% = MAX(OUTAGE_EVENTS_TOP10[HOURS_TO_90PCT])
+
+// ---------------------------------------------------------------------
+// RESTORATION_CURVE
+// ---------------------------------------------------------------------
+
+// Share of the outage cleared by each hour since the peak: (peak - customers out) / (peak - pre-event level); 0 at the peak, 1 back to the pre-event level. A net count, all utilities.
+// Format: 0%
+Share restored = AVERAGE(RESTORATION_CURVE[SHARE_RESTORED])
+
+// ---------------------------------------------------------------------
+// LoadGrowth
+// ---------------------------------------------------------------------
+
+// Commercial sales, 2013 = 100, one year.
+// Format: 0
+Commercial sales index = SELECTEDVALUE(LoadGrowth[commercial_sales_index])
+
+// Commercial customers, 2013 = 100, one year.
+// Format: 0
+Commercial customers index = SELECTEDVALUE(LoadGrowth[commercial_customers_index])
+
+// Residential sales, 2013 = 100, one year.
+// Format: 0
+Residential sales index = SELECTEDVALUE(LoadGrowth[residential_sales_index])
+
+// Point label: commercial index shown only for 2025.
+// Format: 0
+Sales label = IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, [Commercial sales index])
+
+// ---------------------------------------------------------------------
+// Programmes2025
+// ---------------------------------------------------------------------
+
+// Smart meters as a percent of all meters, one utility (a share is never summed).
+// Format: 0.0
+Smart meter share % = SELECTEDVALUE(Programmes2025[smart_meter_share]) * 100
+
+// Percent of customers on a time-varying rate, one utility.
+// Format: 0.0
+Time-varying rate % = SELECTEDVALUE(Programmes2025[time_varying_rate_share_pct])
+
+// ---------------------------------------------------------------------
+// DOM_LOAD_ANNUAL
+// ---------------------------------------------------------------------
+
+// Lowest hourly demand in the year (an extreme, never summed).
+// Format: #,0
 Floor MW = MIN(DOM_LOAD_ANNUAL[FLOOR_MW])
+
+// Highest hourly demand in the year.
+// Format: #,0
 Peak MW = MAX(DOM_LOAD_ANNUAL[PEAK_MW])
+
+// Highest hour in Dec, Jan and Feb of the same calendar year.
+// Format: #,0
 Winter peak MW = MAX(DOM_LOAD_ANNUAL[WINTER_PEAK_MW])
+
+// Highest hour in Jun, Jul and Aug.
+// Format: #,0
 Summer peak MW = MAX(DOM_LOAD_ANNUAL[SUMMER_PEAK_MW])
 
-Floor growth 2019 to 2025 =
-DIVIDE(CALCULATE([Floor MW], DOM_LOAD_ANNUAL[YEAR] = 2025),
-       CALCULATE([Floor MW], DOM_LOAD_ANNUAL[YEAR] = 2019)) - 1
+// Change in the year's lowest hour, 2019 to 2025.
+// Format: 0%
+Floor growth 2019 to 2025 = DIVIDE(CALCULATE([Floor MW], DOM_LOAD_ANNUAL[YEAR] = 2025), CALCULATE([Floor MW], DOM_LOAD_ANNUAL[YEAR] = 2019)) - 1
 
-Peak growth 2019 to 2025 =
-DIVIDE(CALCULATE([Peak MW], DOM_LOAD_ANNUAL[YEAR] = 2025),
-       CALCULATE([Peak MW], DOM_LOAD_ANNUAL[YEAR] = 2019)) - 1
-
-Top 50 hours in 2025 =
-CALCULATE(COUNTROWS(DOM_TOP50_HOURS),
-          DOM_TOP50_HOURS[RANK_END_2025] <= 50,
-          DOM_TOP50_HOURS[YEAR] = 2025)
+// Change in the year's highest hour, 2019 to 2025.
+// Format: 0%
+Peak growth 2019 to 2025 = DIVIDE(CALCULATE([Peak MW], DOM_LOAD_ANNUAL[YEAR] = 2025), CALCULATE([Peak MW], DOM_LOAD_ANNUAL[YEAR] = 2019)) - 1
 
 // ---------------------------------------------------------------------
-// DOM_LOAD_PROFILE: hour-of-day chart colours
+// DOM_TOP50_HOURS
 // ---------------------------------------------------------------------
 
+// Of the 50 highest hours on record to Dec 31, 2025, the number that fell in 2025.
+// Format: 0
+Top 50 hours in 2025 = CALCULATE(COUNTROWS(DOM_TOP50_HOURS), DOM_TOP50_HOURS[RANK_END_2025] <= 50, DOM_TOP50_HOURS[YEAR] = 2025)
+
+// ---------------------------------------------------------------------
+// DOM_LOAD_PROFILE
+// ---------------------------------------------------------------------
+
+// Change in average demand for one hour of the day, 2019 to 2025 (percent).
+// Format: 0.0"%"
+Hour growth % = SELECTEDVALUE(DOM_LOAD_PROFILE[GROWTH_PCT])
+
+// Average demand in one hour of the day, 2019.
+// Format: #,0
+Average MW 2019 = SELECTEDVALUE(DOM_LOAD_PROFILE[AVG_MW_2019])
+
+// Average demand in one hour of the day, 2025.
+// Format: #,0
+Average MW 2025 = SELECTEDVALUE(DOM_LOAD_PROFILE[AVG_MW_2025])
+
+// Column color by the hours the title names: hours ending 1-5 a.m. blue, 1-5 p.m. gold, the rest gray.
 Hour colour =
 VAR h = SELECTEDVALUE(DOM_LOAD_PROFILE[HOUR_NO])
-RETURN
-SWITCH(TRUE(),
-    h <= 6 || h >= 23, "#0A66C2",   // night
-    h >= 18,           "#B8BCC2",   // evening
-                       "#E8B117")   // day
+RETURN SWITCH(TRUE(), h >= 1 && h <= 5, "#0A66C2", h >= 13 && h <= 17, "#E8B117", "#B8BCC2")
 
 // ---------------------------------------------------------------------
-// Workbook tables (Programmes2025, LoadGrowth): no-Snowflake route
+// DOM_LOAD_HOUR_MONTH
 // ---------------------------------------------------------------------
 
-// A share cannot be summed across utilities. Return blank for mixed selections.
-Smart meter share % = SELECTEDVALUE(Programmes2025[smart_meter_share]) * 100
-Time-varying rate % = SELECTEDVALUE(Programmes2025[time_varying_rate_share_pct])
-Sales label = IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, SUM(LoadGrowth[commercial_sales_index]))
+// Average hourly demand in the cells in context (hour x month x year).
+// Format: #,0
+Average MW = AVERAGE(DOM_LOAD_HOUR_MONTH[AVG_MW])
 
-// The named period measures are intentionally fixed to the 2025 review period.
-// Revalidate their year filters before refreshing the report with a newer EIA release.
+// ---------------------------------------------------------------------
+// DOM_SEASONAL_PEAK
+// ---------------------------------------------------------------------
+
+// Highest hour of the season.
+// Format: #,0
+Seasonal peak MW = MAX(DOM_SEASONAL_PEAK[PEAK_MW])
+
+// ---------------------------------------------------------------------
+// FCT_SALES_SECTOR
+// ---------------------------------------------------------------------
+
+// Retail sales in TWh (bundled plus delivery-only), EIA-861.
+// Format: 0.0
+Sales TWh = DIVIDE(SUM(FCT_SALES_SECTOR[SALES_MWH]), 1000000)
+
+// ---------------------------------------------------------------------
+// _Measures
+// ---------------------------------------------------------------------
+
+// SAIDI ex MED for the year chosen in the Year slicer (2025 if none).
+// Format: 0.0
+Selected SAIDI =
+VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
+RETURN CALCULATE([SAIDI ex MED], FCT_RELIABILITY[YEAR] = SelectedYear)
+
+// SAIFI ex MED for the year chosen in the Year slicer.
+// Format: 0.000
+Selected SAIFI =
+VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
+RETURN CALCULATE([SAIFI ex MED], FCT_RELIABILITY[YEAR] = SelectedYear)
+
+// CAIDI ex MED for the year chosen in the Year slicer.
+// Format: 0.0
+Selected CAIDI =
+VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
+RETURN CALCULATE([CAIDI ex MED], FCT_RELIABILITY[YEAR] = SelectedYear)
+
+// Customers served in the year chosen in the Year slicer.
+Selected Customers =
+VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
+RETURN CALCULATE([Total Customers], FCT_RELIABILITY[YEAR] = SelectedYear)
+
+// Major-event-day share of all-event minutes in the year chosen in the Year slicer.
+// Format: 0%
+Selected major-event-day share =
+VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
+RETURN CALCULATE([Major-event-day share], FCT_RELIABILITY[YEAR] = SelectedYear)
+
+
+// ---------------------------------------------------------------------
+// Dashboard-specific compatibility measures observed in the uploaded
+// Dominion_Charts_Raw.pbix and Dominion_Executive_Dashboards.pbix.
+// These are reference definitions; editing this file does not rewrite
+// the measures embedded in the PBIX binary.
+// ---------------------------------------------------------------------
+
+// Executive KPI card. Keeps the label used in the supplied PBIX.
+Selected Major Event Share =
+VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
+RETURN CALCULATE([Major-event-day share], FCT_RELIABILITY[YEAR] = SelectedYear)
+
+// Compatibility with the source-template label.
+Selected major-event-day share = [Selected Major Event Share]
+
+// Legacy label observed in raw charts file; this is a major-event
+// reporting difference, not verified storm-caused outage minutes.
+// Prefer [Major-event-day share] for any new visual.
+Share of outage mins caused by major storms = [Major-event-day share]
+
+// 2013=100 indexed customer and sales fields in LoadGrowth.
+Commercial customers index = SELECTEDVALUE(LoadGrowth[commercial_customers_index])
+Residential customers index = SELECTEDVALUE(LoadGrowth[residential_customers_index])
+Residential customers label =
+    IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, [Residential customers index])
+Comm customers label 2025 =
+    IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, [Commercial customers index])
+Resi sales label 2025 =
+    IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, [Residential sales index])
