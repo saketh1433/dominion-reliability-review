@@ -438,16 +438,12 @@ Selected Major Event Share =
 VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
 RETURN CALCULATE([Major-event-day share], FCT_RELIABILITY[YEAR] = SelectedYear)
 
-// Compatibility with the source-template label.
-Selected major-event-day share = [Selected Major Event Share]
-
 // Legacy label observed in raw charts file; this is a major-event
 // reporting difference, not verified storm-caused outage minutes.
 // Prefer [Major-event-day share] for any new visual.
 Share of outage mins caused by major storms = [Major-event-day share]
 
 // 2013=100 indexed customer and sales fields in LoadGrowth.
-Commercial customers index = SELECTEDVALUE(LoadGrowth[commercial_customers_index])
 Residential customers index = SELECTEDVALUE(LoadGrowth[residential_customers_index])
 Residential customers label =
     IF(SELECTEDVALUE(LoadGrowth[year]) = 2025, [Residential customers index])
