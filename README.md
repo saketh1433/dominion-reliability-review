@@ -4,7 +4,7 @@
 
 ## Why I did this
 
-Dominion reported that its rolling three-year average SAIDI (outage minutes per customer) rose from about **130 minutes** (2022–2024) to **133 minutes** (2023–2025), excluding major event days. These are overlapping, rolling averages—not two separate three-year periods.
+Dominion reported that its rolling three year average SAIDI (outage minutes per customer) rose from about **130 minutes** (2022–2024) to **133 minutes** (2023–2025), excluding major event days. These are overlapping, rolling averages not two separate three-year periods.
 
 I wanted to look beyond the headline: **Were customers losing power more often, were interruptions lasting longer, and how much context could weather and demand data provide?**
 
