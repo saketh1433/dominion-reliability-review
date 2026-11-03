@@ -427,20 +427,18 @@ RETURN CALCULATE([Major-event-day share], FCT_RELIABILITY[YEAR] = SelectedYear)
 
 
 // ---------------------------------------------------------------------
-// Dashboard-specific compatibility measures observed in the uploaded
-// Dominion_Charts_Raw.pbix and Dominion_Executive_Dashboards.pbix.
-// These are reference definitions; editing this file does not rewrite
-// the measures embedded in the PBIX binary.
+// Compatibility measures for executive KPI cards and legacy visual names.
+// The DAX reference is maintained separately from the embedded PBIX model.
 // ---------------------------------------------------------------------
 
-// Executive KPI card. Keeps the label used in the supplied PBIX.
+// Executive KPI for the selected reporting year.
 Selected Major Event Share =
 VAR SelectedYear = SELECTEDVALUE('Dashboard Year'[Year], 2025)
 RETURN CALCULATE([Major-event-day share], FCT_RELIABILITY[YEAR] = SelectedYear)
 
-// Legacy label observed in raw charts file; this is a major-event
-// reporting difference, not verified storm-caused outage minutes.
-// Prefer [Major-event-day share] for any new visual.
+// Legacy visual binding. This is an EIA major-event-day reporting share;
+// it does not attribute interruptions to storms. Use [Major-event-day share]
+// for new visuals.
 Share of outage mins caused by major storms = [Major-event-day share]
 
 // 2013=100 indexed customer and sales fields in LoadGrowth.
