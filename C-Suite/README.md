@@ -1,14 +1,12 @@
-# C-Suite — Dominion Energy Virginia reliability review
+# Executive materials
 
-Executive-facing presentation and dashboard assets.
+The presentation and executive Power BI dashboard summarize the Dominion Energy Virginia reliability review.
 
-| Deliverable | Intended filename | Details |
-|---|---|---|
-| Interview / executive presentation | `Dominion_Reliability_Review.pptx` | Key insights for management review |
-| Executive Power BI report | `Dominion_Executive_Dashboards.pbix` | Two-page executive dashboard |
+| File | Contents |
+|---|---|
+| [Dominion Reliability Review.pptx](Dominion%20Reliability%20Review.pptx) | Interview presentation: reliability trends, severe-weather context, peer comparisons, demand and proposed operational next steps |
+| [Dominion_Executive_Dashboards.pbix](Dominion_Executive_Dashboards.pbix) | Executive Power BI report |
 
-The Power BI measures reference is maintained in [`../powerbi/measures.dax`](../powerbi/measures.dax). **The .dax file is documentation/source reference, not a patch automatically applied to the PBIX data model.** Edit embedded measures with Power BI Desktop or compatible model tools and validate the visuals before publishing.
+All findings are based on public data. The review does not use Dominion's internal outage records or identify individual feeder-level causes.
 
-Scope: public EIA-861 / PUDL, NOAA, EIA-930, and where applicable EAGLE-I; no Dominion private outage records. Major-event-day SAIDI is an EIA reporting difference, not verified storm damage.
-
-Binary presentation and PBIX files are distributed separately if not shown in this folder; upload each via GitHub's Add file > Upload files control using the exact paths above.
+Technical definitions and source files are documented in the [repository README](../README.md), [methods documentation](../docs/) and [DAX reference](../powerbi/measures.dax).

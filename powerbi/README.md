@@ -1,12 +1,17 @@
-# Power BI reports and DAX
+# Power BI reports
 
-- `measures.dax`: latest **reference definitions** for the report, including updated customer-weighted reliability measures, major-event reporting labels, executive selected-year KPI measures, weather comparisons, demand, and outage context.
-- `Dominion_Charts_Raw.pbix`: six-page analytical report supplied 2026-11-02 (Scorecards, What Moved, Weather, Peer Comparison, Growth, Seasonal). Upload the binary here if it does not appear in the repository.
+| File | Purpose |
+|---|---|
+| [Dominion_Charts_Raw.pbix](Dominion_Charts_Raw.pbix) | Detailed analytical charts covering reliability, weather, peer comparisons and electricity demand |
+| [measures.dax](measures.dax) | DAX measure reference and calculation definitions |
+| [Dominion_Reliability_PowerBI_Data.xlsx](Dominion_Reliability_PowerBI_Data.xlsx) | Supporting Power BI workbook |
 
-The separately supplied `Dominion_Executive_Dashboards.pbix` belongs under [`../C-Suite/`](../C-Suite/).
+The [executive dashboard](../C-Suite/Dominion_Executive_Dashboards.pbix) is maintained with the [executive presentation](../C-Suite/Dominion%20Reliability%20Review.pptx).
 
-**Important:** GitHub text changes to `measures.dax` do **not** modify the measures embedded in an existing `.pbix` file. The report files contain embedded model data and should be kept intact. Updating in-report measures requires Power BI Desktop / compatible model tooling; validate all dependent visuals afterwards.
+## Measurement conventions
 
-Use **Major-event-day SAIDI** for `SAIDI all events - SAIDI ex MED`. Avoid presenting any legacy "Storm SAIDI" or "caused by major storms" title as verified weather attribution.
+Reliability indices are customer-weighted where aggregating across reporting utilities. SAIDI including all events minus SAIDI excluding major-event days is a **major-event-day reporting difference**, not independently verified storm damage. Weather-adjusted SAIDI is an exploratory model output, not an EIA-reported measure.
 
-Source model aligned with the public review at [Renvia-code/Sab-Dominion](https://github.com/Renvia-code/Sab-Dominion); DAX definitions extended to match measures referenced by the two reports supplied on 2026-11-02.
+The DAX file is a source reference. Changes to it do not automatically modify measures embedded in the PBIX files; embedded measures and visuals must be validated in Power BI before publication.
+
+See [calculation definitions](../docs/05_metrics_and_measures.md) and [report documentation](../docs/06_powerbi_report.md).
