@@ -87,7 +87,7 @@ python -I scripts/run_local_duckdb.py
 
 This runner covers the reliability SQL and its six checks (T1-T6). NOAA and EIA-930 are separate pipelines with six further SQL checks. The local runner does **not** reproduce the entire Power BI report or its 2025 weather fit.
 
-The project includes the Power BI measure definitions and supporting workbook, but **not a .pbix dashboard file**. The two charts above are reproductions of selected findings from the reported figures, not exports from Power BI Desktop.
+The project includes the Power BI measure definitions and supporting workbook, but and a .pbix dashboard file. The two charts above are reproductions of selected findings from the reported figures.
 
 For data attribution, see [NOTICE.md](NOTICE.md) and [source notes](docs/01_sources.md). Detailed field mappings and known source anomalies are kept in [docs/](docs/) for reproducibility.
 
